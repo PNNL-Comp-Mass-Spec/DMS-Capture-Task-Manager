@@ -1,0 +1,908 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MSFileInfoScannerInterfaces</name>
+    </assembly>
+    <members>
+        <member name="T:MSFileInfoScannerInterfaces.iMSFileInfoScanner">
+            <summary>
+            MS File Info Scanner interface
+            </summary>
+        </member>
+        <member name="T:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes">
+            <summary>
+            MSFileInfoScanner error codes
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.NoError">
+            <summary>
+            No error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.InvalidInputFilePath">
+            <summary>
+            Invalid input file path
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.InvalidOutputDirectoryPath">
+            <summary>
+            Invalid output directory path
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.ParameterFileNotFound">
+            <summary>
+            Parameter file not found
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.FilePathError">
+            <summary>
+            File path error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.ParameterFileReadError">
+            <summary>
+            Parameter file read error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.UnknownFileExtension">
+            <summary>
+            Unknown file extension
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.InputFileAccessError">
+            <summary>
+            Input file access error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.InputFileReadError">
+            <summary>
+            Input file read error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.OutputFileWriteError">
+            <summary>
+            Output file write error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.FileIntegrityCheckError">
+            <summary>
+            File integrity check error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.DatabasePostingError">
+            <summary>
+            Database posting error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError">
+            <summary>
+            MS2 m/z minimum validation error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationWarning">
+            <summary>
+            MS2 m/z minimum validation warning
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.ThermoRawFileReaderError">
+            <summary>
+            Thermo .raw file reader error
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.DatasetHasNoSpectra">
+            <summary>
+            Dataset has not spectra
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.UnspecifiedError">
+            <summary>
+            Unspecified error
+            </summary>
+        </member>
+        <member name="T:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileProcessingStateConstants">
+            <summary>
+            Processing state constants
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileProcessingStateConstants.NotProcessed">
+            <summary>
+            Not processed
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileProcessingStateConstants.SkippedSinceFoundInCache">
+            <summary>
+            Skipped since found in cache
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileProcessingStateConstants.FailedProcessing">
+            <summary>
+            Failed processing
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileProcessingStateConstants.ProcessedSuccessfully">
+            <summary>
+            Successfully processed
+            </summary>
+        </member>
+        <member name="T:MSFileInfoScannerInterfaces.iMSFileInfoScanner.DataFileTypeConstants">
+            <summary>
+            Data file type constants
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.DataFileTypeConstants.MSFileInfo">
+            <summary>
+            MS file info
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.DataFileTypeConstants.DirectoryIntegrityInfo">
+            <summary>
+            Directory integrity info
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.DataFileTypeConstants.FileIntegrityDetails">
+            <summary>
+            File integrity details
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.DataFileTypeConstants.FileIntegrityErrors">
+            <summary>
+            File integrity errors
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.AbortProcessing">
+            <summary>
+            The calling process can set this to true to abort processing
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.AcquisitionTimeFilename">
+            <summary>
+            Acquisition time file name
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.DatasetInfoXML">
+            <summary>
+            Returns the dataset info, formatted as XML
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.ErrorCode">
+            <summary>
+            Error code
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.LCMS2DPlotOptions">
+            <summary>
+            2D Plotting options
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MS2MzMinValidationMessage">
+            <summary>
+            MS2MzMin validation error or warning message
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.Options">
+            <summary>
+            Processing options
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.GetKnownDirectoryExtensions">
+            <summary>
+            Obtain the list of known directory extensions (as an array)
+            </summary>
+            <returns>List of directory extensions</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.GetKnownFileExtensions">
+            <summary>
+            Obtain the list of known file extensions (as an array)
+            </summary>
+            <returns>List of file extensions</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.GetErrorMessage">
+            <summary>
+            Get the error message, or an empty string if no error
+            </summary>
+            <returns>Error message, or empty string</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.LoadParameterFileSettings(System.String)">
+            <summary>
+            Read settings from a Key=Value parameter file
+            </summary>
+            <param name="parameterFilePath">Parameter file path</param>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoToDB(System.String)">
+            <summary>
+            Post the most recently determined dataset into XML to the database
+            </summary>
+            <param name="datasetName">Dataset name</param>
+            <returns>True if success; false if failure</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String)">
+            <summary>
+            Post the most recently determine dataset into XML to the database, using the given dataset name
+            </summary>
+            <param name="datasetName">Dataset name</param>
+            <param name="datasetInfoXML">Database info XML</param>
+            <returns>True if success; false if failure</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String,System.String)">
+            <summary>
+            Post the most recently determine dataset into XML to the database, using the specified connection string and stored procedure
+            </summary>
+            <param name="datasetName">Dataset name</param>
+            <param name="connectionString">Database connection string</param>
+            <param name="storedProcedureName">Stored procedure</param>
+            <returns>True if success; false if failure</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String,System.String,System.String)">
+            <summary>
+            Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
+            </summary>
+            <param name="datasetName">Dataset name</param>
+            <param name="dsInfoXML">Database info XML</param>
+            <param name="connectionString">Database connection string</param>
+            <param name="storedProcedureName">Stored procedure</param>
+            <returns>True if success; false if failure</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String)">
+            <summary>
+            Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
+            This version assumes the stored procedure takes DatasetID as the first parameter
+            </summary>
+            <param name="datasetID">Dataset ID to send to the stored procedure</param>
+            <param name="connectionString">Database connection string</param>
+            <param name="storedProcedureName">Stored procedure</param>
+            <returns>True if success; false if failure</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String,System.String)">
+            <summary>
+            Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
+            This version assumes the stored procedure takes DatasetID as the first parameter
+            </summary>
+            <param name="datasetID">Dataset ID to send to the stored procedure</param>
+            <param name="dsInfoXML">Database info XML</param>
+            <param name="connectionString">Database connection string</param>
+            <param name="storedProcedureName">Stored procedure</param>
+            <returns>True if success; false if failure</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.ProcessMSFileOrDirectory(System.String,System.String)">
+            <summary>
+            Main processing function, with input file / directory path, plus output directory path
+            </summary>
+            <param name="inputFileOrDirectoryPath">Path to the input file or directory; can contain a wildcard (* or ?)</param>
+            <param name="outputDirectoryPath">Directory to write any results files to</param>
+            <returns>True if success, False if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.ProcessMSFileOrDirectory(System.String,System.String,System.Boolean,MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileProcessingStateConstants@)">
+            <summary>
+            Main processing function with input / output paths, error code reset flag, and processing state
+            </summary>
+            <param name="inputFileOrDirectoryPath">Path to the input file or directory; can contain a wildcard (* or ?)</param>
+            <param name="outputDirectoryPath">Directory to write any results files to</param>
+            <param name="resetErrorCode">If true, reset the error code</param>
+            <param name="msFileProcessingState">MS file processing state</param>
+            <returns>True if success, False if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.ProcessMSFileOrDirectoryWildcard(System.String,System.String,System.Boolean)">
+            <summary>
+            Calls ProcessMSFileOrDirectory for all files in inputFileOrDirectoryPath and below having a known extension
+            </summary>
+            <param name="inputFileOrDirectoryPath">Path to the input file or directory; can contain a wildcard (* or ?)</param>
+            <param name="outputDirectoryPath">Directory to write any results files to</param>
+            <param name="resetErrorCode">If true, reset the error code</param>
+            <returns>True if success, False if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.ProcessMSFilesAndRecurseDirectories(System.String,System.String,System.Int32)">
+            <summary>
+            Calls ProcessMSFileOrDirectory for all files in inputFilePathOrDirectory and below having a known extension
+            </summary>
+            <param name="inputFilePathOrDirectory">Path to the input file or directory; can contain a wildcard (* or ?)</param>
+            <param name="outputDirectoryPath">Directory to write any results files to</param>
+            <param name="maxLevelsToRecurse">Maximum depth to recurse; Set to 0 to process all directories</param>
+            <returns>True if success, False if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.SaveCachedResults">
+            <summary>
+            Save cached results now
+            </summary>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.SaveCachedResults(System.Boolean)">
+            <summary>
+            Save cached results now
+            </summary>
+            <param name="clearCachedData">When true, clear cached data</param>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.SaveParameterFileSettings(System.String)">
+            <summary>
+            Save parameter file settings
+            </summary>
+            <param name="parameterFilePath">Parameter file path</param>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="T:MSFileInfoScannerInterfaces.InfoScannerOptions">
+            <summary>
+            MS file info scanner options
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.InfoScannerOptions.DEFAULT_DATASET_STATS_FILENAME">
+            <summary>
+            Default dataset stats text file name
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.InfoScannerOptions.DEFAULT_MAXIMUM_TEXT_FILE_LINES_TO_CHECK">
+            <summary>
+            Default maximum number of lines to check in text files
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.InfoScannerOptions.DEFAULT_MAXIMUM_XML_ELEMENT_NODES_TO_CHECK">
+            <summary>
+            Default maximum number of XML nodes to examine in XML files
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.InfoScannerOptions.MINIMUM_MZ_THRESHOLD_ITRAQ">
+            <summary>
+            Default m/z threshold for iTRAQ labeled samples
+            </summary>
+            <remarks>All MS/MS spectra should have a scan range that starts below this value</remarks>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.InfoScannerOptions.MINIMUM_MZ_THRESHOLD_ITRAQ_STRING">
+            <summary>
+            String version of the default m/z threshold for iTRAQ labeled samples
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.InfoScannerOptions.MINIMUM_MZ_THRESHOLD_TMT">
+            <summary>
+            Default m/z threshold for TMT labeled samples
+            </summary>
+            <remarks>All MS/MS spectra should have a scan range that starts below this value</remarks>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.InfoScannerOptions.MINIMUM_MZ_THRESHOLD_TMT_STRING">
+            <summary>
+            String version of the default m/z threshold for TMT labeled samples
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.InputDataFilePath">
+            <summary>
+            Input file path
+            </summary>
+            <remarks>This path can contain wildcard characters, e.g. C:\*.raw</remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.OutputDirectoryPath">
+            <summary>
+            Output directory path
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ParameterFilePath">
+            <summary>
+            Key=Value parameter file path
+            </summary>
+            <remarks>
+            This property is intended for use when using MSFileInfoScanner.dll along with a parameter file
+            For MSFileInfoScanner.exe, specify the parameter file using /Conf or /P
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.RecurseDirectories">
+            <summary>
+            When true, recurse subdirectories
+            </summary>
+            <remarks>
+            This will be auto-set to true if MaxLevelsToRecurse is defined in the parameter file or if /S is used at the command line
+            This functionality is enabled by the ArgExistsProperty option
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.MaxLevelsToRecurse">
+            <summary>
+            Process files in subdirectories
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.IgnoreErrorsWhenRecursing">
+            <summary>
+            When true, ignore errors when recursing
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LogMessagesToFile">
+            <summary>
+            When true, create a log file
+            </summary>
+            <remarks>
+            This is auto-set to true if /L or /LogDir is used at the command line, or if
+            LogfilePath or LogDirectory have a name defined in a parameter file
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LogFilePath">
+            <summary>
+            Log file path
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LogDirectoryPath">
+            <summary>
+            Log directory path
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.WriteStatusToFile">
+            <summary>
+            When true, report progress and errors using a status file
+            </summary>
+            <remarks>
+            This is auto-set to true if /SF is used at the command line, or if
+            StatusFilePath has a name defined in a parameter file
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.StatusFilePath">
+            <summary>
+            Status file path
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LCMSPlotMzResolution">
+            <summary>
+            m/z resolution when centroiding data for LC/MS 2D plots
+            </summary>
+            <remarks>
+            This value cannot be updated via the Options class after MSFileInfoScanner is instantiated
+            Use MSFileInfoProcessorBaseClass.LCMS2DPlotOptions instead
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LCMSPlotMinPointsPerSpectrum">
+            <summary>
+            Minimum points per spectrum for inclusion on LC/MS 2D plots
+            </summary>
+            <remarks>
+            This value cannot be updated via the Options class after MSFileInfoScanner is instantiated
+            Use MSFileInfoProcessorBaseClass.LCMS2DPlotOptions instead
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LCMSPlotMaxChargeState">
+            <summary>
+            Maximum charge state to display when plotting deisotoped data (from a DeconTools _isos.csv file)
+            </summary>
+            <remarks>
+            This value cannot be updated via the Options class after MSFileInfoScanner is instantiated
+            Use MSFileInfoProcessorBaseClass.LCMS2DPlotOptions instead
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LCMSPlotMaxPointsToPlot">
+            <summary>
+            Maximum points to plot on each LC/MS 2D plot
+            </summary>
+            <remarks>
+            This value cannot be updated via the Options class after MSFileInfoScanner is instantiated
+            Use MSFileInfoProcessorBaseClass.LCMS2DPlotOptions instead
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LCMSPlotMinIntensity">
+            <summary>
+            Minimum intensity to require for each mass spectrum data point when adding data to LC/MS 2D plots
+            </summary>
+            <remarks>
+            This value cannot be updated via the Options class after MSFileInfoScanner is instantiated
+            Use MSFileInfoProcessorBaseClass.LCMS2DPlotOptions instead
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LCMSPlotMaxMonoMass">
+            <summary>
+            Maximum monoisotopic mass for deisotoped LC/MS plots
+            </summary>
+            <remarks>
+            <para>
+            This is only used when PlottingDeisotopedData is true,
+            which will be the case if the source data is a DeconTools _isos.csv file
+            </para>
+            <para>
+            This value cannot be updated via the Options class after MSFileInfoScanner is instantiated
+            Use MSFileInfoProcessorBaseClass.LCMS2DPlotOptions instead
+            </para>
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.LCMSOverviewPlotDivisor">
+            <summary>
+            The divisor to use when creating the overview 2D LC/MS plots
+            If 0, do not create overview plots
+            </summary>
+            <remarks>
+            This value cannot be updated via the Options class after MSFileInfoScanner is instantiated
+            Use MSFileInfoProcessorBaseClass.LCMS2DPlotOptions instead
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.SaveTICAndBPIPlots">
+            <summary>
+            When true, save TIC and BPI plots
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.HideEmptyHTMLSections">
+            <summary>
+            When true, hide empty HTML sections
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.TestLCMSGradientColorSchemes">
+            <summary>
+            When true, save a series of 2D LC plots, each using a different color scheme
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.UseDatasetNameForHtmlPlotsFile">
+            <summary>
+            When true, use dataset name for the HTML plot file
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DatasetID">
+            <summary>
+            Dataset ID
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateDatasetInfoFile">
+            <summary>
+            When true, create the dataset info XML file
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateScanStatsFile">
+            <summary>
+            When true, create scan stats files
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ComputeOverallQualityScores">
+            <summary>
+            When true, compute quality scores
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CheckCentroidingStatus">
+            <summary>
+            When true, check centroiding status
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CopyFileLocalOnReadError">
+            <summary>
+            When true, copy the instrument file locally if a read error occurs
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.SaveLCMS2DPlots">
+            <summary>
+            When true, create 2D LC/MS plots
+            </summary>
+            <remarks>
+            This will be auto-set to true if LCMS2DMaxPointsToPlot is defined in the parameter file or if /LC is used at the command line
+            This functionality is enabled by the ArgExistsProperty option
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.MS2MzMinString">
+            <summary>
+            Minimum m/z value that all MS/MS spectra should have
+            Can be a numeric value, or the text iTRAQ or TMT
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.MS2MzMin">
+            <summary>
+            Minimum m/z value that all MS/MS spectra should have
+            </summary>
+            <remarks>Auto-defined when Validate is called based on MS2MzMinString</remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DisableInstrumentHash">
+            <summary>
+            When true, disable computing the SHA-1 hash for the primary instrument data file(s)
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.UpdateDatasetStatsTextFile">
+            <summary>
+            When true, update (or create) a tab-delimited text file with overview stats for each dataset
+            </summary>
+            <remarks>
+            This will be auto-set to true if DatasetStatsTextFileName is defined in the parameter file or if /DST is used at the command line
+            This functionality is enabled by the ArgExistsProperty option
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DatasetStatsTextFileName">
+            <summary>
+            When defined, update (or create) a tab-delimited text file with overview stats for the dataset
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ScanStart">
+            <summary>
+            Optional filter for the first scan number to process
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ScanEnd">
+            <summary>
+            Optional filter for the last scan number to process
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ShowDebugInfo">
+            <summary>
+            When true, show debug messages
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CheckFileIntegrity">
+            <summary>
+            When true, check file integrity
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.MaximumTextFileLinesToCheck">
+            <summary>
+            Maximum number of lines to process when checking text or csv files
+            </summary>
+            <remarks>This value cannot be updated after class MSFileInfoScanner is instantiated</remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.MaximumXMLElementNodesToCheck">
+            <summary>
+            Maximum number of XML nodes to examine when checking XML files
+            </summary>
+            <remarks>This value cannot be updated after class MSFileInfoScanner is instantiated</remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ComputeFileHashes">
+            <summary>
+            Compute file hashes when CheckFileIntegrity is true
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ZipFileCheckAllData">
+            <summary>
+            When CheckFileIntegrity is true, also validate zip files (quick check)
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.UseCacheFiles">
+            <summary>
+            When enabled, save/load information from the acquisition time file (cache file)
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ReprocessExistingFiles">
+            <summary>
+            Reprocess existing files
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ReprocessIfCachedSizeIsZero">
+            <summary>
+            When true, reprocess files that are already defined in the acquisition time file only if their cached size is 0
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.PostResultsToDMS">
+            <summary>
+            When true, store the dataset info in the DMS database
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DatabaseConnectionString">
+            <summary>
+            Database connection string
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DSInfoStoredProcedure">
+            <summary>
+            Dataset info stored procedure name
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.PlotWithPython">
+            <summary>
+            When true, use Python script MSFileInfoScanner_Plotter.py instead of OxyPlot to create the plots
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.InfoScannerOptions.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.InfoScannerOptions.Validate">
+            <summary>
+            Validate the options
+            </summary>
+            <remarks>This method is called from Program.cs</remarks>
+            <returns>True if all options are valid</returns>
+        </member>
+        <member name="T:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions">
+            <summary>
+            Options class for the LCMSDataPlotter
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MAX_CHARGE_STATE">
+            <summary>
+            Default maximum charge state to display when plotting deisotoped data (from a DeconTools _isos.csv file)
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT">
+            <summary>
+            Default maximum number of points to plot on each LC/MS 2D plot
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM">
+            <summary>
+            Default minimum points per spectrum for inclusion on LC/MS 2D plots
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR">
+            <summary>
+            Default divisor to use when creating the overview 2D LC/MS plots
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION">
+            <summary>
+            Default m/z resolution when centroiding data for LC/MS 2D plots
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MS1_PLOT_TITLE">
+            <summary>
+            Default MS1 plot title
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MS2_PLOT_TITLE">
+            <summary>
+            Default MS2 plot title
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MAX_MONO_MASS_FOR_DEISOTOPED_PLOT">
+            <summary>
+            Default maximum monoisotopic mass for deisotoped LC/MS plots
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DEFAULT_MAX_MONO_MASS_FOR_ZOOMED_DEISOTOPED_PLOT">
+            <summary>
+            Default maximum monoisotopic mass for the zoomed deisotoped LC/MS plot
+            </summary>
+        </member>
+        <member name="F:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.mMaxMonoMass">
+            <summary>
+            Maximum monoisotopic mass for the deisotoped plot
+            </summary>
+            <remarks>
+            This is only used when PlottingDeisotopedData is true,
+            which will be the case if the source data is a DeconTools _isos.csv file
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.DeleteTempFiles">
+            <summary>
+            When true, delete temporary files
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.OverviewPlotDivisor">
+            <summary>
+            The divisor to use when creating the overview 2D LC/MS plots
+            The max points to plot value (MaxPointsToPlot) is divided by the overview plot divisor to compute the number of points to include on the overview plot
+            </summary>
+            <remarks>If 0, do not create overview plots</remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MaxChargeToPlot">
+            <summary>
+            Maximum charge state to display when plotting deisotoped data (from a DeconTools _isos.csv file)
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MaxPointsToPlot">
+            <summary>
+            Maximum number of points to plot
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MinPointsPerSpectrum">
+            <summary>
+            Minimum points per spectrum for inclusion on LC/MS 2D plots
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MS1PlotTitle">
+            <summary>
+            MS1 plot title
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MS2PlotTitle">
+            <summary>
+            MS2 plot title
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MZResolution">
+            <summary>
+            m/z resolution to use when centroiding spectra
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MinIntensity">
+            <summary>
+            Minimum intensity to require for each mass spectrum data point when adding data to LC/MS 2D plots
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.MaxMonoMassForDeisotopedPlot">
+            <summary>
+            Maximum monoisotopic mass for deisotoped LC/MS plots
+            </summary>
+            <remarks>
+            This is only used when PlottingDeisotopedData is true,
+            which will be the case if the source data is a DeconTools _isos.csv file
+            </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.PlottingDeisotopedData">
+            <summary>
+            This will be set to true when we're plotting deisotoped data (from a DeconTools _isos.csv file)
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.PlotWithPython">
+            <summary>
+            When true, use Python script MSFileInfoScanner_Plotter.py instead of OxyPlot to create the plots
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.TestGradientColorSchemes">
+            <summary>
+            Set to True to print out a series of 2D plots, each using a different color scheme
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.UseObservedMinScan">
+            <summary>
+            True if we should use the observed minimum scan
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.Clone">
+            <summary>
+            Clone the options
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.#ctor(MSFileInfoScannerInterfaces.InfoScannerOptions)">
+            <summary>
+            Constructor that accepts an options class
+            </summary>
+            <param name="options">Options</param>
+        </member>
+        <member name="T:MSFileInfoScannerInterfaces.ProcessingStatus">
+            <summary>
+            MS File Info Scanner processing status
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.ErrorCode">
+            <summary>
+            Error code
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.ErrorCountLoadDataForScan">
+            <summary>
+            Number of times an error message starting with "Unable to load data for scan" was raised by ThermoRawFileReader
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.ErrorCountUnknownScanFilterFormat">
+            <summary>
+            Number of times an error message starting with "Unknown format for Scan Filter" was raised by ThermoRawFileReader
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.LastUpdate">
+            <summary>
+            Processing status date/time
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.ProgressMessage">
+            <summary>
+            Progress message
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.ProgressPercentComplete">
+            <summary>
+            Percent complete (value between 0 and 100)
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.ProcessingStatus.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.ProcessingStatus.Reset">
+            <summary>
+            Reset stored values
+            </summary>
+        </member>
+        <member name="T:MSFileInfoScannerInterfaces.StatusFileTools">
+            <summary>
+            Methods for reading and writing the processing status file
+            </summary>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.StatusFileTools.ReadStatusFile(System.String,MSFileInfoScannerInterfaces.ProcessingStatus@)">
+            <summary>
+            Read the status file
+            </summary>
+            <param name="statusFilePath">Status file path</param>
+            <param name="status">Output: processing status</param>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:MSFileInfoScannerInterfaces.StatusFileTools.WriteStatusFile(System.String,MSFileInfoScannerInterfaces.ProcessingStatus)">
+            <summary>
+            Update the status file
+            </summary>
+            <param name="statusFilePath">Status file path</param>
+            <param name="status">Processing status</param>
+        </member>
+    </members>
+</doc>

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net48</TargetFrameworks>
+    <TargetFrameworks>net48;net8.0-windows</TargetFrameworks>
     <OutputType>Library</OutputType>
     <RootNamespace>DatasetInfoPlugin</RootNamespace>
     <AssemblyName>DatasetInfoPlugin</AssemblyName>
@@ -17,6 +17,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Properties\**" />
+    <Compile Remove="_Trash\**" />
+    <EmbeddedResource Remove="_Trash\**" />
+    <None Remove="_Trash\**" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\version.json">
@@ -36,7 +39,7 @@
       <HintPath>..\DeployedFiles\$(TargetFramework)\CTM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="MSFileInfoScannerInterfaces">
-      <HintPath>..\RefLib\net48\MSFileInfoScannerInterfaces.dll</HintPath>
+      <HintPath>..\RefLib\net8.0-windows\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

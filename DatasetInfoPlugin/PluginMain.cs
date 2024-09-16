@@ -7,14 +7,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using CaptureTaskManager;
 using MSFileInfoScannerInterfaces;
 using PRISM;
-using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 namespace DatasetInfoPlugin
@@ -25,14 +24,18 @@ namespace DatasetInfoPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        // Ignore Spelling: acq, Bruker, fid, href, html, Illumina, labelling, maldi, mgf
-        // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, wiff
+        // Ignore Spelling: acq, Altis, Bruker, fid, href, html, Illumina, labelling, maldi, mgf
+        // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, utf, wiff
 
         private const string BRUKER_MCF_FILE_EXTENSION = ".mcf";
 
         private const bool IGNORE_BRUKER_BAF_ERRORS = false;
 
         private const string INVALID_FILE_TYPE = "Invalid File Type";
+
+        private const int MAX_INFO_SCANNER_RUNTIME_HOURS = 24;
+
+        private const int MAX_INFO_SCANNER_RUNTIME_MINUTES = 60 * MAX_INFO_SCANNER_RUNTIME_HOURS;
 
         private const string MS_FILE_SCANNER_DS_INFO_SP = "cache_dataset_info_xml";
 
@@ -45,30 +48,47 @@ namespace DatasetInfoPlugin
             AllPlots = 2
         }
 
-        private iMSFileInfoScanner mMsFileScanner;
-
         private string mMsg;
 
-        private bool mErrorOccurred;
-
-        private int mErrorCountLoadDataForScan;
-
-        private int mErrorCountUnknownScanFilterFormat;
-
         private int mFailedScanCount;
-
-        private DateTime mProcessingStartTime;
 
         private DateTime mLastProgressUpdate;
 
         private DateTime mLastStatusUpdate;
 
-        private int mStatusUpdateIntervalMinutes;
+        private DateTime mProcessingStartTime;
+
+        private ProcessingStatus mProcessingStatus;
+
+        private string mMsFileInfoScannerExePath;
+
+        private readonly InfoScannerOptions mMsFileScannerOptions;
+
+        private readonly LCMSDataPlotterOptions mLCMS2DPlotOptions;
+
+        private string mStatusFilePath;
+
+        private readonly StatusFileTools mStatusFileTools;
 
         /// <summary>
         /// Property to flag if this is being run specifically for LC data capture
         /// </summary>
         protected virtual bool IsLcDataCapture => false;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public PluginMain()
+        {
+            mMsFileScannerOptions = new InfoScannerOptions();
+
+            mLCMS2DPlotOptions = new LCMSDataPlotterOptions();
+
+            mProcessingStatus = new ProcessingStatus();
+
+            mStatusFileTools = new StatusFileTools();
+            RegisterEvents(mStatusFileTools);
+        }
 
         /// <summary>
         /// Runs the dataset info step tool
@@ -107,7 +127,7 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Initializes MSFileInfoScanner
+        /// Initializes MSFileInfoScanner options
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="taskParams">Parameters for the assigned task</param>
@@ -118,36 +138,24 @@ namespace DatasetInfoPlugin
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
+            mMsFileInfoScannerExePath = GetMSFileInfoScannerExePath();
 
-            if (string.IsNullOrEmpty(msFileInfoScannerDLLPath))
+            if (string.IsNullOrEmpty(mMsFileInfoScannerExePath))
             {
                 throw new NotSupportedException("Manager parameter 'MSFileInfoScannerDir' is not defined");
             }
 
-            if (!File.Exists(msFileInfoScannerDLLPath))
+            if (!File.Exists(mMsFileInfoScannerExePath))
             {
-                throw new FileNotFoundException("File Not Found: " + msFileInfoScannerDLLPath);
+                throw new FileNotFoundException("File Not Found: " + mMsFileInfoScannerExePath);
             }
 
             mProcessingStartTime = DateTime.UtcNow;
+            mProcessingStatus.ProgressPercentComplete = 0;
             mLastProgressUpdate = DateTime.UtcNow;
             mLastStatusUpdate = DateTime.UtcNow;
-            mStatusUpdateIntervalMinutes = 5;
 
-            // Initialize the MSFileInfoScanner
-            mMsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
-            RegisterEvents(mMsFileScanner);
-
-            // Add custom error and warning handlers
-            UnregisterEventHandler(mMsFileScanner, BaseLogger.LogLevels.ERROR);
-            UnregisterEventHandler(mMsFileScanner, BaseLogger.LogLevels.WARN);
-
-            mMsFileScanner.ErrorEvent += MsFileScanner_ErrorEvent;
-            mMsFileScanner.WarningEvent += MsFileScanner_WarningEvent;
-
-            // Monitor progress reported by MSFileInfoScanner
-            mMsFileScanner.ProgressUpdate += ProgressUpdateHandler;
+            // Initialize the MSFileInfoScanner options
 
             LogDebug("Completed PluginMain.Setup()");
         }
@@ -170,30 +178,30 @@ namespace DatasetInfoPlugin
             var outputPathBase = Path.Combine(datasetDirectoryPath, "QC");
 
             // Set up the params for the MS file scanner
-            mMsFileScanner.Options.PostResultsToDMS = false;
-            mMsFileScanner.Options.SaveTICAndBPIPlots = mTaskParams.GetParam("SaveTICAndBPIPlots", true);
-            mMsFileScanner.Options.SaveLCMS2DPlots = mTaskParams.GetParam("SaveLCMS2DPlots", true);
-            mMsFileScanner.Options.ComputeOverallQualityScores = mTaskParams.GetParam("ComputeOverallQualityScores", false);
-            mMsFileScanner.Options.CreateDatasetInfoFile = mTaskParams.GetParam("CreateDatasetInfoFile", true);
+            mMsFileScannerOptions.PostResultsToDMS = false;
+            mMsFileScannerOptions.SaveTICAndBPIPlots = mTaskParams.GetParam("SaveTICAndBPIPlots", true);
+            mMsFileScannerOptions.SaveLCMS2DPlots = mTaskParams.GetParam("SaveLCMS2DPlots", true);
+            mMsFileScannerOptions.ComputeOverallQualityScores = mTaskParams.GetParam("ComputeOverallQualityScores", false);
+            mMsFileScannerOptions.CreateDatasetInfoFile = mTaskParams.GetParam("CreateDatasetInfoFile", true);
 
-            mMsFileScanner.LCMS2DPlotOptions.MZResolution = mTaskParams.GetParam("LCMS2DPlotMZResolution", LCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
-            mMsFileScanner.LCMS2DPlotOptions.MaxPointsToPlot = mTaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", LCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
-            mMsFileScanner.LCMS2DPlotOptions.MinPointsPerSpectrum = mTaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", LCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
-            mMsFileScanner.LCMS2DPlotOptions.MinIntensity = mTaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
-            mMsFileScanner.LCMS2DPlotOptions.OverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", LCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
+            mLCMS2DPlotOptions.MZResolution = mTaskParams.GetParam("LCMS2DPlotMZResolution", LCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
+            mLCMS2DPlotOptions.MaxPointsToPlot = mTaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", LCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
+            mLCMS2DPlotOptions.MinPointsPerSpectrum = mTaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", LCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
+            mLCMS2DPlotOptions.MinIntensity = mTaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
+            mLCMS2DPlotOptions.OverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", LCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
             var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", string.Empty);
             var experimentName = mTaskParams.GetParam("Meta_Experiment_Num", string.Empty);
-            ConfigureMinimumMzValidation(mMsFileScanner, experimentName, sampleLabelling);
+            ConfigureMinimumMzValidation(experimentName, sampleLabelling);
 
-            mMsFileScanner.Options.DatasetID = mDatasetID;
-            mMsFileScanner.Options.CheckCentroidingStatus = true;
-            mMsFileScanner.Options.PlotWithPython = true;
+            mMsFileScannerOptions.DatasetID = mDatasetID;
+            mMsFileScannerOptions.CheckCentroidingStatus = true;
+            mMsFileScannerOptions.PlotWithPython = true;
 
             // Debugging aids:
 
             // Uncomment to disable SHA-1 hashing of instrument files
-            // mMsFileScanner.Options.DisableInstrumentHash = true;
+            // mMsFileInfoScannerOptions.DisableInstrumentHash = true;
 
             // Uncomment to skip creating plots
             // mTaskParams.SetParam("SkipPlots", "true");
@@ -263,20 +271,20 @@ namespace DatasetInfoPlugin
             {
                 case QCPlottingModes.NoPlots:
                     // Do not create any plots
-                    mMsFileScanner.Options.SaveTICAndBPIPlots = false;
-                    mMsFileScanner.Options.SaveLCMS2DPlots = false;
+                    mMsFileScannerOptions.SaveTICAndBPIPlots = false;
+                    mMsFileScannerOptions.SaveLCMS2DPlots = false;
                     break;
 
                 case QCPlottingModes.BpiAndTicOnly:
                     // Only create the BPI and TIC plots
-                    mMsFileScanner.Options.SaveTICAndBPIPlots = true;
-                    mMsFileScanner.Options.SaveLCMS2DPlots = false;
+                    mMsFileScannerOptions.SaveTICAndBPIPlots = true;
+                    mMsFileScannerOptions.SaveLCMS2DPlots = false;
                     break;
             }
 
             if (IsLcDataCapture)
             {
-                mMsFileScanner.Options.HideEmptyHTMLSections = true;
+                mMsFileScannerOptions.HideEmptyHTMLSections = true;
             }
 
             // Make the output directory
@@ -330,7 +338,7 @@ namespace DatasetInfoPlugin
                 currentItemNumber++;
 
                 // Reset this for each input file or directory
-                mErrorOccurred = false;
+                mProcessingStatus.ErrorCode = 0;
 
                 var remoteFileOrDirectoryPath = Path.Combine(datasetDirectoryPath, datasetFileOrDirectory);
 
@@ -446,39 +454,135 @@ namespace DatasetInfoPlugin
                     currentOutputDirectory = localOutputDir;
                 }
 
-                bool successProcessing;
-                mErrorCountLoadDataForScan = 0;
-                mErrorCountUnknownScanFilterFormat = 0;
+                mStatusFilePath = Path.Combine(mWorkDir, "MSFileInfoScanner_Status.xml");
 
-                try
+                var argumentList = new List<string>
                 {
-                    var equivalentCommandLineArguments = GetEquivalentCommandLineArgs(mMsFileScanner, pathToProcess);
+                    string.Format("/I:{0}", PathUtils.PossiblyQuotePath(pathToProcess)),
+                    string.Format("/O:{0}", currentOutputDirectory),
+                    string.Format("/SF:{0}", mStatusFilePath)
+                };
 
-                    LogMessage("Processing with MSFileInfoScanner.dll; equivalent executable call: " +
-                               "MSFileInfoScanner.exe {0}",
-                        equivalentCommandLineArguments);
-
-                    successProcessing = mMsFileScanner.ProcessMSFileOrDirectory(pathToProcess, currentOutputDirectory);
+                if (!mMsFileScannerOptions.SaveTICAndBPIPlots)
+                {
+                    argumentList.Add("/NoTIC");
                 }
-                catch (Exception ex)
+                else if (IsLcDataCapture)
                 {
-                    LogError("Error running MSFileInfoScanner", ex);
+                    argumentList.Add("/HideEmpty");
+                }
+
+                if (mMsFileScannerOptions.SaveLCMS2DPlots)
+                {
+                    argumentList.Add("/LC");
+                }
+
+                if (mMsFileScannerOptions.CreateDatasetInfoFile)
+                {
+                    argumentList.Add("/DI");
+                }
+
+                if (mMsFileScannerOptions.CheckCentroidingStatus)
+                {
+                    argumentList.Add("/CC");
+                }
+
+                if (mMsFileScannerOptions.PlotWithPython)
+                {
+                    argumentList.Add("/Python");
+                }
+
+                if (mMsFileScannerOptions.CheckCentroidingStatus)
+                {
+                    argumentList.Add("/SS");
+                }
+
+                if (mMsFileScannerOptions.ComputeOverallQualityScores)
+                {
+                    argumentList.Add("/QS");
+                }
+
+                if (mMsFileScannerOptions.MS2MzMin > 0)
+                {
+                    argumentList.Add(string.Format("/MS2MzMin:{0:F1}", mMsFileScannerOptions.MS2MzMin));
+                }
+
+                if (mMsFileScannerOptions.ScanStart > 0)
+                {
+                    argumentList.Add("/ScanStart:" + mMsFileScannerOptions.ScanStart);
+                }
+
+                if (mMsFileScannerOptions.ScanEnd > 0)
+                {
+                    argumentList.Add("/ScanEnd:" + mMsFileScannerOptions.ScanEnd);
+                }
+
+                if (mMsFileScannerOptions.ShowDebugInfo)
+                {
+                    argumentList.Add("/Debug");
+                }
+
+                var consoleOutputFilePath = Path.Combine(mWorkDir, "MSFileInfoScanner_ConsoleOutput.txt");
+
+                var cmdRunner = new RunDosProgram(mWorkDir)
+                {
+                    CreateNoWindow = false,
+                    EchoOutputToConsole = false,
+                    CacheStandardOutput = false,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = consoleOutputFilePath
+                };
+
+                // This will also call RegisterEvents
+                AttachCmdRunnerEvents(cmdRunner);
+
+                mProcessingStartTime = DateTime.UtcNow;
+                mProcessingStatus.ProgressPercentComplete = 0;
+                mLastProgressUpdate = DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
+
+                var arguments = string.Join(" ", argumentList);
+
+                LogMessage("Starting MsFileInfoScanner: {0} {1}", mMsFileInfoScannerExePath, arguments);
+
+                const int maxRuntimeSeconds = MAX_INFO_SCANNER_RUNTIME_MINUTES * 60;
+                var successProcessing = cmdRunner.RunProgram(mMsFileInfoScannerExePath, arguments, "MsFileInfoScanner", true, maxRuntimeSeconds);
+
+                DetachCmdRunnerEvents(cmdRunner);
+
+                if (!successProcessing)
+                {
+                    returnData.CloseoutMsg = "Error running MsFileInfoScanner";
+                    LogError(returnData.CloseoutMsg);
+
+                    if (cmdRunner.ExitCode != 0)
+                    {
+                        LogWarning("MsFileInfoScanner returned a non-zero exit code: " + cmdRunner.ExitCode);
+                    }
+                    else
+                    {
+                        LogWarning("Call to MsFileInfoScanner failed (but exit code is 0)");
+                    }
+
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return returnData;
+                }
+
+                LogMessage("MsFileInfoScanner Complete");
+
+                if (mProcessingStatus.ErrorCode != iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
+                {
                     successProcessing = false;
                 }
 
-                if (mErrorOccurred)
-                {
-                    successProcessing = false;
-                }
-
-                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.ThermoRawFileReaderError)
+                if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.ThermoRawFileReaderError)
                 {
                     // Call to .OpenRawFile failed
                     mMsg = "Error running MSFileInfoScanner: Call to .OpenRawFile failed";
                     LogError(mMsg);
                     successProcessing = false;
                 }
-                else if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.DatasetHasNoSpectra)
+                else if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.DatasetHasNoSpectra)
                 {
                     // Dataset has no spectra
                     // If the instrument class is BrukerFT_BAF and the dataset has an analysis.baf file but no ser or fid file, treat this as a warning
@@ -528,17 +632,17 @@ namespace DatasetInfoPlugin
                     mFileTools.DeleteDirectory(localDirectoryPath);
                 }
 
-                var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
+                var mzMinValidationError = mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
 
                 if (mzMinValidationError)
                 {
-                    mMsg = mMsFileScanner.GetErrorMessage();
+                    mMsg = mProcessingStatus.ErrorMessage;
                     successProcessing = false;
                 }
 
-                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationWarning)
+                if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationWarning)
                 {
-                    var warningMsg = mMsFileScanner.GetErrorMessage();
+                    var warningMsg = mProcessingStatus.ErrorMessage;
                     returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
@@ -569,7 +673,12 @@ namespace DatasetInfoPlugin
 
                 if (successProcessing)
                 {
-                    cachedDatasetInfoXML.Add(mMsFileScanner.DatasetInfoXML);
+                    if (mMsFileScannerOptions.CreateDatasetInfoFile)
+                    {
+                        // Read the DatasetInfo XML file and store in cachedDatasetInfoXML
+                        LoadDatasetInfoXML(currentOutputDirectory, cachedDatasetInfoXML);
+                    }
+
                     primaryFileOrDirectoryProcessed = true;
 
                     if (validQcGraphics)
@@ -578,7 +687,7 @@ namespace DatasetInfoPlugin
                     continue;
                 }
 
-                if (mErrorCountLoadDataForScan > 0)
+                if (mProcessingStatus.ErrorCountLoadDataForScan > 0)
                 {
                     returnData.EvalMsg = AppendToComment(
                         returnData.EvalMsg, "Corrupt spectra found; inspect QC plots to decide if errors can be ignored");
@@ -619,19 +728,14 @@ namespace DatasetInfoPlugin
                         if (string.IsNullOrEmpty(mMsg))
                         {
                             mMsg = "ProcessMSFileOrFolder returned false. Message = " +
-                                   mMsFileScanner.GetErrorMessage() +
-                                   " returnData code = " + (int)mMsFileScanner.ErrorCode;
+                                   mProcessingStatus.ErrorMessage +
+                                   " returnData code = " + (int)mProcessingStatus.ErrorCode;
                         }
 
                         LogError(mMsg);
 
                         returnData.CloseoutMsg = mMsg;
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(mMsFileScanner.DatasetInfoXML))
-                    {
-                        cachedDatasetInfoXML.Add(mMsFileScanner.DatasetInfoXML);
                     }
 
                     if (mzMinValidationError)
@@ -689,11 +793,11 @@ namespace DatasetInfoPlugin
             // If cachedDatasetInfoXml contains just one item, simply return it
             var datasetXmlMerger = new DatasetInfoXmlMerger();
 
-            var datasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML, totalDatasetFilesOrDirectories);
+            var combinedDatasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML, totalDatasetFilesOrDirectories);
 
             if (cachedDatasetInfoXML.Count > 1)
             {
-                ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, datasetInfoXML, outputDirectoryNames);
+                ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, combinedDatasetInfoXML, outputDirectoryNames);
             }
 
             // Check for dataset acq time gap warnings
@@ -703,7 +807,7 @@ namespace DatasetInfoPlugin
             bool success;
             string errorMessage;
 
-            if (string.IsNullOrWhiteSpace(datasetInfoXML))
+            if (string.IsNullOrWhiteSpace(combinedDatasetInfoXML))
             {
                 success = false;
                 errorMessage = "Dataset info XML is an empty string";
@@ -717,7 +821,7 @@ namespace DatasetInfoPlugin
             else
             {
                 // Call SP cache_dataset_info_xml to store datasetInfoXML in table T_Dataset_Info_XML
-                success = PostDatasetInfoXml(datasetInfoXML, out errorMessage);
+                success = PostDatasetInfoXml(combinedDatasetInfoXML, out errorMessage);
             }
 
             if (!success)
@@ -731,8 +835,8 @@ namespace DatasetInfoPlugin
                 if (string.IsNullOrEmpty(mMsg))
                 {
                     mMsg = "ProcessMSFileOrFolder returned false. Message = " +
-                           mMsFileScanner.GetErrorMessage() +
-                           " returnData code = " + (int)mMsFileScanner.ErrorCode;
+                           mProcessingStatus.ErrorMessage +
+                           " returnData code = " + (int)mProcessingStatus.ErrorCode;
                 }
 
                 LogError(mMsg);
@@ -827,15 +931,14 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Check whether the experiment for this dataset has labelling value defined
+        /// Check whether the experiment for this dataset has a labelling value defined
         /// If it doesn't, or if it is Unknown or None, examine the dataset name
         /// </summary>
-        /// <param name="msFileInfoScanner"></param>
         /// <param name="experimentName"></param>
         /// <param name="sampleLabelling"></param>
-        private void ConfigureMinimumMzValidation(iMSFileInfoScanner msFileInfoScanner, string experimentName, string sampleLabelling)
+        private void ConfigureMinimumMzValidation(string experimentName, string sampleLabelling)
         {
-            mMsFileScanner.Options.MS2MzMin = 0;
+            mMsFileScannerOptions.MS2MzMin = 0;
 
             if (mTaskParams.GetParam("SkipMinimumMzValidation", false))
             {
@@ -853,13 +956,13 @@ namespace DatasetInfoPlugin
 
                 if (!string.IsNullOrEmpty(reporterIonMzMinText) && float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
                 {
-                    msFileInfoScanner.Options.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
+                    mMsFileScannerOptions.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
                     LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since experiment {1} has {2} labelling",
-                        msFileInfoScanner.Options.MS2MzMin, experimentName, sampleLabelling);
+                        mMsFileScannerOptions.MS2MzMin, experimentName, sampleLabelling);
                 }
             }
 
-            if (msFileInfoScanner.Options.MS2MzMin > 0)
+            if (mMsFileScannerOptions.MS2MzMin > 0)
             {
                 return;
             }
@@ -885,18 +988,18 @@ namespace DatasetInfoPlugin
 
             if (iTRAQMatch.Success)
             {
-                msFileInfoScanner.Options.MS2MzMin = 113;
+                mMsFileScannerOptions.MS2MzMin = 113;
                 LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
-                    msFileInfoScanner.Options.MS2MzMin, iTRAQMatch.Value);
+                    mMsFileScannerOptions.MS2MzMin, iTRAQMatch.Value);
             }
 
             var tmtMatch = tmtMatcher.Match(mDataset);
 
             if (tmtMatch.Success && mDataset.IndexOf("NanoPOTS_mTIFF_TMT_24_01", StringComparison.OrdinalIgnoreCase) < 0)
             {
-                msFileInfoScanner.Options.MS2MzMin = 126;
+                mMsFileScannerOptions.MS2MzMin = 126;
                 LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
-                    msFileInfoScanner.Options.MS2MzMin, tmtMatch.Value);
+                    mMsFileScannerOptions.MS2MzMin, tmtMatch.Value);
             }
         }
 
@@ -1298,81 +1401,9 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Convert the options defined in msFileScanner to the
-        /// equivalent list of command line arguments that could be sent to MSFileInfoScanner.exe
+        /// Construct the full path to the MSFileInfoScanner.exe
         /// </summary>
-        /// <param name="msFileScanner"></param>
-        /// <param name="datasetFileName"></param>
-        private string GetEquivalentCommandLineArgs(iMSFileInfoScanner msFileScanner, string datasetFileName)
-        {
-            var argumentList = new List<string>();
-
-            if (!msFileScanner.Options.SaveTICAndBPIPlots)
-            {
-                argumentList.Add("/NoTIC");
-            }
-            else if (IsLcDataCapture)
-            {
-                argumentList.Add("/HideEmpty");
-            }
-
-            if (msFileScanner.Options.SaveLCMS2DPlots)
-            {
-                argumentList.Add("/LC");
-            }
-
-            if (msFileScanner.Options.CreateDatasetInfoFile)
-            {
-                argumentList.Add("/DI");
-            }
-
-            if (msFileScanner.Options.CheckCentroidingStatus)
-            {
-                argumentList.Add("/CC");
-            }
-
-            if (msFileScanner.Options.PlotWithPython)
-            {
-                argumentList.Add("/Python");
-            }
-
-            if (msFileScanner.Options.CheckCentroidingStatus)
-            {
-                argumentList.Add("/SS");
-            }
-
-            if (msFileScanner.Options.ComputeOverallQualityScores)
-            {
-                argumentList.Add("/QS");
-            }
-
-            if (msFileScanner.Options.MS2MzMin > 0)
-            {
-                argumentList.Add(string.Format("/MS2MzMin:{0:F1}", msFileScanner.Options.MS2MzMin));
-            }
-
-            if (msFileScanner.Options.ScanStart > 0)
-            {
-                argumentList.Add("/ScanStart:" + msFileScanner.Options.ScanStart);
-            }
-
-            if (msFileScanner.Options.ScanEnd > 0)
-            {
-                argumentList.Add("/ScanEnd:" + msFileScanner.Options.ScanEnd);
-            }
-
-            if (msFileScanner.Options.ShowDebugInfo)
-            {
-                argumentList.Add("/Debug");
-            }
-
-            return datasetFileName + " " + string.Join(" ", argumentList);
-        }
-
-        /// <summary>
-        /// Construct the full path to the MSFileInfoScanner.DLL
-        /// </summary>
-        private string GetMSFileInfoScannerDLLPath()
+        private string GetMSFileInfoScannerExePath()
         {
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
 
@@ -1381,62 +1412,36 @@ namespace DatasetInfoPlugin
                 return string.Empty;
             }
 
-            return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
+            return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.exe");
         }
 
-        private iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
+        private void LoadDatasetInfoXML(string currentOutputDirectory, ICollection<string> cachedDatasetInfoXML)
         {
-            const string MsDataFileReaderClass = "MSFileInfoScanner.MSFileInfoScanner";
+            var outputDirectory = new DirectoryInfo(currentOutputDirectory);
 
-            iMSFileInfoScanner msFileInfoScanner = null;
-            string msg;
+            var filesToRename = new List<FileInfo>();
 
-            try
+            foreach (var datasetInfoFile in outputDirectory.GetFiles("*_DatasetInfo.xml"))
             {
-                if (!File.Exists(msFileInfoScannerDLLPath))
+                using var streamReader = new StreamReader(new FileStream(datasetInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var datasetInfoXML = streamReader.ReadToEnd();
+
+                cachedDatasetInfoXML.Add(datasetInfoXML);
+
+                filesToRename.Add(datasetInfoFile);
+            }
+
+            foreach (var datasetInfoFile in filesToRename)
+            {
+                var renamedFile = new FileInfo(datasetInfoFile.FullName + ".stored");
+
+                if (renamedFile.Exists)
                 {
-                    msg = "DLL not found: " + msFileInfoScannerDLLPath;
-                    LogError(msg);
+                    renamedFile.Delete();
                 }
-                else
-                {
-                    var newInstance = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
 
-                    if (newInstance != null)
-                    {
-                        msFileInfoScanner = (iMSFileInfoScanner)newInstance;
-                        msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
-                        LogMessage(msg);
-                    }
-                    else
-                    {
-                        LogError("LoadObject was unable to load class {0} from {1}; it returned null",
-                            MsDataFileReaderClass, msFileInfoScannerDLLPath);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
-                LogError(msg, ex);
-            }
-
-            return msFileInfoScanner;
-        }
-
-        private object LoadObject(string className, string dllFilePath)
-        {
-            try
-            {
-                // Dynamically load the specified class from dllFilePath
-                var assembly = Assembly.LoadFrom(dllFilePath);
-                var dllType = assembly.GetType(className, false, true);
-                return Activator.CreateInstance(dllType);
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "Exception loading DLL {0}: {1}", dllFilePath, ex.Message);
-                return null;
+                datasetInfoFile.MoveTo(renamedFile.FullName);
             }
         }
 
@@ -1520,11 +1525,16 @@ namespace DatasetInfoPlugin
             return false;
         }
 
+        private void ParseStatusFile()
+        {
+            mStatusFileTools.ReadStatusFile(mStatusFilePath, out mProcessingStatus);
+        }
+
         private bool PostDatasetInfoXml(string datasetInfoXML, out string errorMessage)
         {
             var postCount = 0;
 
-            // This connection string points to the DMS_Capture database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
@@ -1537,7 +1547,7 @@ namespace DatasetInfoPlugin
 
             while (postCount <= 2)
             {
-                successPosting = mMsFileScanner.PostDatasetInfoUseDatasetID(
+                successPosting = PostDatasetInfoXml(
                     datasetID, datasetInfoXML, connectionStringToUse, MS_FILE_SCANNER_DS_INFO_SP);
 
                 if (successPosting)
@@ -1555,23 +1565,8 @@ namespace DatasetInfoPlugin
                 postCount++;
             }
 
-            iMSFileInfoScanner.MSFileScannerErrorCodes errorCode;
-
             if (successPosting)
             {
-                errorCode = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
-            }
-            else
-            {
-                errorCode = mMsFileScanner.ErrorCode;
-                mMsg = "Error posting dataset info XML. Message = " +
-                        mMsFileScanner.GetErrorMessage() + " returnData code = " + (int)mMsFileScanner.ErrorCode;
-                LogError(mMsg);
-            }
-
-            if (errorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
-            {
-                // Everything went wonderfully
                 errorMessage = string.Empty;
                 return true;
             }
@@ -1579,6 +1574,87 @@ namespace DatasetInfoPlugin
             // Either a non-zero error code was returned, or an error event was received
             errorMessage = "Error posting dataset info XML";
             return false;
+        }
+
+        /// <summary>
+        /// Post the dataset info in datasetInfoXML to the database, using the specified connection string and stored procedure
+        /// This version assumes the stored procedure takes DatasetID as the first parameter
+        /// </summary>
+        /// <param name="datasetID">Dataset ID to send to the stored procedure</param>
+        /// <param name="datasetInfoXML">Database info XML</param>
+        /// <param name="connectionString">Database connection string</param>
+        /// <param name="storedProcedureName">Stored procedure</param>
+        /// <returns>True if success; false if failure</returns>
+        private bool PostDatasetInfoXml(int datasetID, string datasetInfoXML, string connectionString, string storedProcedureName)
+        {
+            bool success;
+
+            try
+            {
+                LogMessage("  Posting DatasetInfo XML to the database (using Dataset ID " + datasetID + ")");
+
+                // We need to remove the encoding line from datasetInfoXML before posting to the DB
+                // This line will look like this:
+                //   <?xml version="1.0" encoding="utf-16" standalone="yes"?>
+
+                var startIndex = datasetInfoXML.IndexOf("?>", StringComparison.Ordinal);
+                string dsInfoXMLClean;
+
+                if (startIndex > 0)
+                {
+                    dsInfoXMLClean = datasetInfoXML.Substring(startIndex + 2).Trim();
+                }
+                else
+                {
+                    dsInfoXMLClean = datasetInfoXML;
+                }
+
+                // Call stored procedure storedProcedure using connection string connectionString
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    LogError("Connection string not defined; unable to post the dataset info to the database");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(storedProcedureName))
+                {
+                    storedProcedureName = "cache_dataset_info_xml";
+                }
+
+                var applicationName = "MSFileInfoScanner_DatasetID_" + datasetID;
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse);
+                RegisterEvents(dbTools);
+
+                var cmd = dbTools.CreateCommand(storedProcedureName, CommandType.StoredProcedure);
+
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = datasetID;
+                dbTools.AddParameter(cmd, "@DatasetInfoXML", SqlType.XML).Value = dsInfoXMLClean;
+
+                var result = dbTools.ExecuteSP(cmd);
+
+                if (result == DbUtilsConstants.RET_VAL_OK)
+                {
+                    // No errors
+                    success = true;
+                }
+                else
+                {
+                    LogError("Error calling stored procedure to store dataset info XML, return code = " + returnParam.Value.CastDBVal<string>());
+                    success = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error calling stored procedure to store dataset info XML", ex);
+                success = false;
+            }
+
+            return success;
         }
 
         private void ProcessMultiDatasetInfoScannerResults(
@@ -1836,12 +1912,12 @@ namespace DatasetInfoPlugin
                 return false;
             }
 
-            // Lookup the version of the MSFileInfoScanner DLL
-            var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
+            // Lookup the version of the MSFileInfoScanner Exe
+            var msFileInfoScannerExePath = GetMSFileInfoScannerExePath();
 
-            if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
+            if (!string.IsNullOrEmpty(msFileInfoScannerExePath))
             {
-                success = StoreToolVersionInfoOneFile(ref toolVersionInfo, msFileInfoScannerDLLPath);
+                success = StoreToolVersionInfoOneFile(ref toolVersionInfo, msFileInfoScannerExePath);
 
                 if (!success)
                 {
@@ -1858,15 +1934,15 @@ namespace DatasetInfoPlugin
                 return false;
             }
 
-            // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in toolFiles
+            // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.exe in toolFiles
             var toolFiles = new List<FileInfo>
             {
                 new(pluginPath)
             };
 
-            if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
+            if (!string.IsNullOrEmpty(msFileInfoScannerExePath))
             {
-                toolFiles.Add(new FileInfo(msFileInfoScannerDLLPath));
+                toolFiles.Add(new FileInfo(msFileInfoScannerExePath));
             }
 
             try
@@ -1954,103 +2030,43 @@ namespace DatasetInfoPlugin
             return false;
         }
 
-        /// <summary>
-        /// Handles an error event from MS file scanner
-        /// </summary>
-        /// <param name="message">Error message</param>
-        /// <param name="ex"></param>
-        private void MsFileScanner_ErrorEvent(string message, Exception ex)
+        private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
-            var errorMsg = "Error running MSFileInfoScanner: " + message;
-
-            if (ex != null)
+            try
             {
-                errorMsg += "; " + ex.Message;
+                RegisterEvents(cmdRunner);
+                cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+                cmdRunner.Timeout += CmdRunner_Timeout;
             }
-
-            if (message.StartsWith("Error using ProteoWizard reader"))
+            catch
             {
-                // This is not always a critical error; log it as a warning
-                LogWarning(errorMsg);
-            }
-            else
-            {
-                mErrorOccurred = true;
-
-                // Limit the logging of messages similar to:
-
-                if (message.StartsWith("Unable to load data for scan"))
-                {
-                    mErrorCountLoadDataForScan++;
-
-                    if (mErrorCountLoadDataForScan > 25 && mErrorCountLoadDataForScan % 1000 != 0)
-                    {
-                        ConsoleMsgUtils.ShowWarning("Error running MSFileInfoScanner: " + message);
-                        return;
-                    }
-                }
-                else if (message.StartsWith("Unknown format for Scan Filter"))
-                {
-                    mErrorCountUnknownScanFilterFormat++;
-
-                    if (mErrorCountUnknownScanFilterFormat > 25 && mErrorCountUnknownScanFilterFormat % 1000 != 0)
-                    {
-                        ConsoleMsgUtils.ShowWarning("Error running MSFileInfoScanner: " + message);
-                        return;
-                    }
-                }
-
-                // Message often contains long paths; check for this and shorten them.
-                // For example, switch
-                // from: \\proto-6\LTQ_Orb_1\2015_4\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
-                // to:   QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
-
-                // Match text of the form         \\server\share\directory<anything>DatasetName.Extension
-                // or                             C:\directory<anything>DatasetName.Extension
-                var filenameMatcher = new Regex(@"([a-z]:|\\\\[^\\]+\\[^\\]+)\\[^\\]+.+(" + mDataset + @"\.[a-z0-9]+)", RegexOptions.IgnoreCase);
-
-                if (filenameMatcher.IsMatch(message))
-                {
-                    mMsg = "Error running MSFileInfoScanner: " + filenameMatcher.Replace(message, "$2");
-                }
-                else
-                {
-                    mMsg = "Error running MSFileInfoScanner: " + message;
-                }
-
-                LogError(errorMsg);
+                // Ignore errors here
             }
         }
 
-        /// <summary>
-        /// Handles a warning event from MS file scanner
-        /// </summary>
-        /// <param name="message"></param>
-        private void MsFileScanner_WarningEvent(string message)
+        private void DetachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
-            if (message.StartsWith("Unable to load data for scan"))
+            try
             {
-                mFailedScanCount++;
-
-                if (mFailedScanCount < 10)
+                if (cmdRunner != null)
                 {
-                    LogWarning(message);
-                }
-                else if (
-                    mFailedScanCount < 100 && mFailedScanCount % 25 == 0 ||
-                    mFailedScanCount < 1000 && mFailedScanCount % 250 == 0 ||
-                    mFailedScanCount % 500 == 0)
-                {
-                    LogWarning("Unable to load data for {0} spectra", mFailedScanCount);
+                    cmdRunner.LoopWaiting -= CmdRunner_LoopWaiting;
+                    cmdRunner.Timeout -= CmdRunner_Timeout;
                 }
             }
-            else
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch
             {
-                LogWarning(message);
+                // Ignore errors here
             }
         }
 
-        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        private void CmdRunner_Timeout()
+        {
+            LogError("CmdRunner timeout reported (MSFileInfoScanner has been running for over {0} hours)", MAX_INFO_SCANNER_RUNTIME_HOURS);
+        }
+
+        private void CmdRunner_LoopWaiting()
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalSeconds < 30)
             {
@@ -2059,20 +2075,17 @@ namespace DatasetInfoPlugin
 
             mLastProgressUpdate = DateTime.UtcNow;
 
-            mStatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
+            ParseStatusFile();
 
-            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
-            {
-                mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage("MSFileInfoScanner running; {0:F1} minutes elapsed",
-                    DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes);
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds < 300)
+                return;
 
-                // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
-                if (mStatusUpdateIntervalMinutes < 30)
-                {
-                    mStatusUpdateIntervalMinutes++;
-                }
-            }
+            mLastStatusUpdate = DateTime.UtcNow;
+
+            LogDebug("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
+                "MSFileInfoScanner",
+                DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes,
+                mProcessingStatus.ProgressPercentComplete);
         }
     }
 }
