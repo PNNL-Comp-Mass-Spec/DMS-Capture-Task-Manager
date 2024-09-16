@@ -550,6 +550,9 @@ namespace DatasetInfoPlugin
 
                 DetachCmdRunnerEvents(cmdRunner);
 
+                // Parse the status file one more time
+                ParseStatusFile();
+
                 if (!successProcessing)
                 {
                     returnData.CloseoutMsg = "Error running MsFileInfoScanner";
