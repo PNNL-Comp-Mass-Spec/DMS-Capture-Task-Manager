@@ -106,81 +106,6 @@ namespace DatasetInfoPlugin
             return returnData;
         }
 
-        private bool CopyRemoteDirectoryToLocal(FileSystemInfo remoteDirectory, string localDirectoryPath, ToolReturnData returnData)
-        {
-            try
-            {
-                mFileTools.CopyDirectory(remoteDirectory.FullName, localDirectoryPath, true);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                returnData.CloseoutMsg = string.Format("Error copying remote .D directory to local working directory ({0} to {1})",
-                    remoteDirectory.FullName, mWorkDir);
-
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
-                LogError(returnData.CloseoutMsg, ex);
-                return false;
-            }
-        }
-
-        private iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
-        {
-            const string MsDataFileReaderClass = "MSFileInfoScanner.MSFileInfoScanner";
-
-            iMSFileInfoScanner msFileInfoScanner = null;
-            string msg;
-
-            try
-            {
-                if (!File.Exists(msFileInfoScannerDLLPath))
-                {
-                    msg = "DLL not found: " + msFileInfoScannerDLLPath;
-                    LogError(msg);
-                }
-                else
-                {
-                    var newInstance = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
-
-                    if (newInstance != null)
-                    {
-                        msFileInfoScanner = (iMSFileInfoScanner)newInstance;
-                        msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
-                        LogMessage(msg);
-                    }
-                    else
-                    {
-                        LogError("LoadObject was unable to load class {0} from {1}; it returned null",
-                            MsDataFileReaderClass, msFileInfoScannerDLLPath);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
-                LogError(msg, ex);
-            }
-
-            return msFileInfoScanner;
-        }
-
-        private object LoadObject(string className, string dllFilePath)
-        {
-            try
-            {
-                // Dynamically load the specified class from dllFilePath
-                var assembly = Assembly.LoadFrom(dllFilePath);
-                var dllType = assembly.GetType(className, false, true);
-                return Activator.CreateInstance(dllType);
-            }
-            catch (Exception ex)
-            {
-                LogError(ex, "Exception loading DLL {0}: {1}", dllFilePath, ex.Message);
-                return null;
-            }
-        }
-
         /// <summary>
         /// Initializes MSFileInfoScanner
         /// </summary>
@@ -859,295 +784,21 @@ namespace DatasetInfoPlugin
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool PostDatasetInfoXml(string datasetInfoXML, out string errorMessage)
+        /// <summary>
+        /// Looks for a zip file matching "0_R*X*.zip"
+        /// </summary>
+        /// <param name="datasetDirectory">Dataset directory</param>
+        /// <returns>Returns the file name if found, otherwise an empty string</returns>
+        private string CheckForBrukerImagingZipFiles(DirectoryInfo datasetDirectory)
         {
-            var postCount = 0;
+            var zipFiles = datasetDirectory.GetFiles("0_R*X*.zip");
 
-            // This connection string points to the DMS_Capture database
-            var connectionString = mMgrParams.GetParam("ConnectionString");
-
-            var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
-
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-
-            var datasetID = mTaskParams.GetParam("Dataset_ID", 0);
-
-            var successPosting = false;
-
-            while (postCount <= 2)
+            if (zipFiles.Length > 0)
             {
-                successPosting = mMsFileScanner.PostDatasetInfoUseDatasetID(
-                    datasetID, datasetInfoXML, connectionStringToUse, MS_FILE_SCANNER_DS_INFO_SP);
-
-                if (successPosting)
-                {
-                    break;
-                }
-
-                // If the error message contains the text "timeout expired" then try again, up to 2 times
-                if (mMsg.IndexOf("timeout expired", StringComparison.OrdinalIgnoreCase) < 0)
-                {
-                    break;
-                }
-
-                System.Threading.Thread.Sleep(1500);
-                postCount++;
+                return zipFiles[0].Name;
             }
 
-            iMSFileInfoScanner.MSFileScannerErrorCodes errorCode;
-
-            if (successPosting)
-            {
-                errorCode = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
-            }
-            else
-            {
-                errorCode = mMsFileScanner.ErrorCode;
-                mMsg = "Error posting dataset info XML. Message = " +
-                        mMsFileScanner.GetErrorMessage() + " returnData code = " + (int)mMsFileScanner.ErrorCode;
-                LogError(mMsg);
-            }
-
-            if (errorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
-            {
-                // Everything went wonderfully
-                errorMessage = string.Empty;
-                return true;
-            }
-
-            // Either a non-zero error code was returned, or an error event was received
-            errorMessage = "Error posting dataset info XML";
-            return false;
-        }
-
-        private void ProcessMultiDatasetInfoScannerResults(
-            string outputPathBase,
-            DatasetInfoXmlMerger datasetXmlMerger,
-            string datasetInfoXML,
-            IEnumerable<string> outputDirectoryNames)
-        {
-            var combinedDatasetInfoFilename = mDataset + "_Combined_DatasetInfo.xml";
-
-            try
-            {
-                // Write the combined XML to disk
-                var combinedXmlFilePath = Path.Combine(outputPathBase, combinedDatasetInfoFilename);
-
-                using var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-
-                xmlWriter.WriteLine(datasetInfoXML);
-            }
-            catch (Exception ex)
-            {
-                var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset;
-
-                if (System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) &&
-                    !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
-                {
-                    LogWarning(msg + ": " + ex.Message);
-
-                    var localFilePath = Path.Combine(mWorkDir, combinedDatasetInfoFilename);
-
-                    try
-                    {
-                        using var xmlWriter = new StreamWriter(new FileStream(localFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-
-                        xmlWriter.WriteLine(datasetInfoXML);
-                    }
-                    catch (Exception ex2)
-                    {
-                        var msg2 = "Exception creating the combined _DatasetInfo.xml file in directory " + mWorkDir;
-                        LogWarning(msg2 + ": " + ex2.Message);
-                    }
-
-                    return;
-                }
-
-                LogError(msg, ex);
-            }
-
-            try
-            {
-                var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""", RegexOptions.IgnoreCase);
-
-                // Create an index.html file that shows all the plots in the subdirectories
-                var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
-
-                using var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-
-                // ReSharper disable once StringLiteralTypo
-                htmlWriter.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
-                htmlWriter.WriteLine("<html>");
-                htmlWriter.WriteLine("<head>");
-                htmlWriter.WriteLine("  <title>" + mDataset + "</title>");
-                htmlWriter.WriteLine("  <style>");
-                htmlWriter.WriteLine("     table.DataTable {");
-                htmlWriter.WriteLine("       margin: 10px 5px 5px 5px;");
-                htmlWriter.WriteLine("       border: 1px solid black;");
-                htmlWriter.WriteLine("       border-collapse: collapse;");
-                htmlWriter.WriteLine("     }");
-                htmlWriter.WriteLine();
-                htmlWriter.WriteLine("     th.DataHead {");
-                htmlWriter.WriteLine("       border: 1px solid black;");
-                htmlWriter.WriteLine("       padding: 2px 4px 2px 2px; ");
-                htmlWriter.WriteLine("       text-align: left;");
-                htmlWriter.WriteLine("     }");
-                htmlWriter.WriteLine();
-                htmlWriter.WriteLine("     td.DataCell {");
-                htmlWriter.WriteLine("       border: 1px solid black;");
-                htmlWriter.WriteLine("       padding: 2px 4px 2px 4px;");
-                htmlWriter.WriteLine("     }");
-                htmlWriter.WriteLine();
-                htmlWriter.WriteLine("     td.DataCentered {");
-                htmlWriter.WriteLine("       border: 1px solid black;");
-                htmlWriter.WriteLine("       padding: 2px 4px 2px 4px;");
-                htmlWriter.WriteLine("       text-align: center;");
-                htmlWriter.WriteLine("     }");
-                htmlWriter.WriteLine("  </style>");
-                htmlWriter.WriteLine("</head>");
-                htmlWriter.WriteLine();
-                htmlWriter.WriteLine("<body>");
-                htmlWriter.WriteLine("  <h2>" + mDataset + "</h2>");
-                htmlWriter.WriteLine();
-                htmlWriter.WriteLine("  <table>");
-
-                foreach (var subdirectoryName in outputDirectoryNames)
-                {
-                    var subdirectoryInfo = new DirectoryInfo(Path.Combine(outputPathBase, subdirectoryName));
-                    var htmlFiles = subdirectoryInfo.GetFiles("index.html");
-
-                    if (htmlFiles.Length == 0)
-                    {
-                        continue;
-                    }
-
-                    using var htmlReader = new StreamReader(new FileStream(htmlFiles[0].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                    var processingTable = false;
-                    var htmlToAppend = new List<string>();
-                    var htmlHasImageInfo = false;
-                    var rowDepth = 0;
-
-                    while (!htmlReader.EndOfStream)
-                    {
-                        var dataLine = htmlReader.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
-
-                        var lineTrimmed = dataLine.Trim();
-
-                        if (processingTable)
-                        {
-                            var rowAdded = false;
-
-                            // Look for png files
-                            if (pngMatcher.IsMatch(dataLine))
-                            {
-                                // Match found; prepend the subdirectory name
-                                dataLine = pngMatcher.Replace(dataLine, '"' + subdirectoryInfo.Name + "/${Filename}" + '"');
-                                htmlHasImageInfo = true;
-                            }
-
-                            if (lineTrimmed.StartsWith("<tr>"))
-                            {
-                                // Start of a table row
-                                rowDepth++;
-
-                                htmlToAppend.Add(dataLine);
-                                rowAdded = true;
-                            }
-
-                            if (lineTrimmed.EndsWith("</tr>"))
-                            {
-                                // End of a table row
-                                if (!rowAdded)
-                                {
-                                    htmlToAppend.Add(dataLine);
-                                    rowAdded = true;
-                                }
-                                rowDepth--;
-
-                                if (rowDepth == 0 && htmlToAppend.Count > 0)
-                                {
-                                    if (htmlHasImageInfo)
-                                    {
-                                        // Write this set of rows out to the new index.html file
-                                        foreach (var outRow in htmlToAppend)
-                                        {
-                                            htmlWriter.WriteLine(outRow);
-                                        }
-                                    }
-                                    htmlToAppend.Clear();
-                                    htmlHasImageInfo = false;
-                                }
-                            }
-
-                            if (rowDepth == 0 && lineTrimmed.StartsWith("</table>"))
-                            {
-                                // Done processing the main table
-                                // Stop parsing this file
-                                break;
-                            }
-
-                            if (!rowAdded)
-                            {
-                                htmlToAppend.Add(dataLine);
-                            }
-                        }
-                        else if (dataLine.Trim().StartsWith("<table>"))
-                        {
-                            processingTable = true;
-                        }
-                    }
-                }
-
-                // Add the combined stats
-                htmlWriter.WriteLine("    <tr>");
-                htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
-                htmlWriter.WriteLine("    </tr>");
-                htmlWriter.WriteLine("    <tr>");
-                htmlWriter.WriteLine("      <td>&nbsp;</td>");
-                htmlWriter.WriteLine("      <td align=\"right\">Combined Stats:</td>");
-                // ReSharper disable once StringLiteralTypo
-                htmlWriter.WriteLine("      <td valign=\"middle\">");
-                htmlWriter.WriteLine("        <table class=\"DataTable\">");
-                htmlWriter.WriteLine("          <tr><th class=\"DataHead\">Scan Type</th><th class=\"DataHead\">Scan Count</th><th class=\"DataHead\">Scan Filter Text</th></tr>");
-
-                foreach (var item in datasetXmlMerger.ScanTypes)
-                {
-                    var scanTypeName = item.Key.Key;
-                    var scanCount = item.Value;
-
-                    htmlWriter.WriteLine("          <tr><td class=\"DataCell\">" + scanTypeName + "</td><td class=\"DataCentered\">" + scanCount + "</td><td class=\"DataCell\"</td></tr>");
-                }
-
-                htmlWriter.WriteLine("        </table>");
-                htmlWriter.WriteLine("      </td>");
-                htmlWriter.WriteLine("    </tr>");
-                htmlWriter.WriteLine("    <tr>");
-                htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
-                htmlWriter.WriteLine("    </tr>");
-
-                // Add a link to the Dataset detail report
-                htmlWriter.WriteLine("    <tr>");
-                htmlWriter.WriteLine("      <td>&nbsp;</td>");
-                htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + mDataset + "\">Dataset Detail Report</a></td>");
-                htmlWriter.WriteLine("      <td align=\"center\"><a href=\"" + combinedDatasetInfoFilename + "\">Dataset Info XML file</a></td>");
-                htmlWriter.WriteLine("    </tr>");
-                htmlWriter.WriteLine();
-                htmlWriter.WriteLine("  </table>");
-                htmlWriter.WriteLine();
-                htmlWriter.WriteLine("</body>");
-                htmlWriter.WriteLine("</html>");
-                htmlWriter.WriteLine();
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception creating the combined _DatasetInfo.xml file for " + mDataset, ex);
-            }
+            return string.Empty;
         }
 
         /// <summary>
@@ -1173,23 +824,6 @@ namespace DatasetInfoPlugin
             }
 
             return datasetXmlMerger.CombineDatasetInfoXML(mDataset, cachedDatasetInfoXml, totalDatasetFilesOrDirectories);
-        }
-
-        /// <summary>
-        /// Looks for a zip file matching "0_R*X*.zip"
-        /// </summary>
-        /// <param name="datasetDirectory">Dataset directory</param>
-        /// <returns>Returns the file name if found, otherwise an empty string</returns>
-        private string CheckForBrukerImagingZipFiles(DirectoryInfo datasetDirectory)
-        {
-            var zipFiles = datasetDirectory.GetFiles("0_R*X*.zip");
-
-            if (zipFiles.Length > 0)
-            {
-                return zipFiles[0].Name;
-            }
-
-            return string.Empty;
         }
 
         /// <summary>
@@ -1323,6 +957,25 @@ namespace DatasetInfoPlugin
                 currentOutputDirectory = outputPathBase;
             }
             return currentOutputDirectory;
+        }
+
+        private bool CopyRemoteDirectoryToLocal(FileSystemInfo remoteDirectory, string localDirectoryPath, ToolReturnData returnData)
+        {
+            try
+            {
+                mFileTools.CopyDirectory(remoteDirectory.FullName, localDirectoryPath, true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                returnData.CloseoutMsg = string.Format("Error copying remote .D directory to local working directory ({0} to {1})",
+                    remoteDirectory.FullName, mWorkDir);
+
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                LogError(returnData.CloseoutMsg, ex);
+                return false;
+            }
         }
 
         /// <summary>
@@ -1731,6 +1384,62 @@ namespace DatasetInfoPlugin
             return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
         }
 
+        private iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
+        {
+            const string MsDataFileReaderClass = "MSFileInfoScanner.MSFileInfoScanner";
+
+            iMSFileInfoScanner msFileInfoScanner = null;
+            string msg;
+
+            try
+            {
+                if (!File.Exists(msFileInfoScannerDLLPath))
+                {
+                    msg = "DLL not found: " + msFileInfoScannerDLLPath;
+                    LogError(msg);
+                }
+                else
+                {
+                    var newInstance = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
+
+                    if (newInstance != null)
+                    {
+                        msFileInfoScanner = (iMSFileInfoScanner)newInstance;
+                        msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
+                        LogMessage(msg);
+                    }
+                    else
+                    {
+                        LogError("LoadObject was unable to load class {0} from {1}; it returned null",
+                            MsDataFileReaderClass, msFileInfoScannerDLLPath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
+                LogError(msg, ex);
+            }
+
+            return msFileInfoScanner;
+        }
+
+        private object LoadObject(string className, string dllFilePath)
+        {
+            try
+            {
+                // Dynamically load the specified class from dllFilePath
+                var assembly = Assembly.LoadFrom(dllFilePath);
+                var dllType = assembly.GetType(className, false, true);
+                return Activator.CreateInstance(dllType);
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "Exception loading DLL {0}: {1}", dllFilePath, ex.Message);
+                return null;
+            }
+        }
+
         /// <summary>
         /// A dataset file was not found
         /// Look for alternate dataset files, or look for .d directories
@@ -1809,6 +1518,297 @@ namespace DatasetInfoPlugin
 
             dotDDirectoryName = string.Empty;
             return false;
+        }
+
+        private bool PostDatasetInfoXml(string datasetInfoXML, out string errorMessage)
+        {
+            var postCount = 0;
+
+            // This connection string points to the DMS_Capture database
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+
+            var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+
+            var datasetID = mTaskParams.GetParam("Dataset_ID", 0);
+
+            var successPosting = false;
+
+            while (postCount <= 2)
+            {
+                successPosting = mMsFileScanner.PostDatasetInfoUseDatasetID(
+                    datasetID, datasetInfoXML, connectionStringToUse, MS_FILE_SCANNER_DS_INFO_SP);
+
+                if (successPosting)
+                {
+                    break;
+                }
+
+                // If the error message contains the text "timeout expired" then try again, up to 2 times
+                if (mMsg.IndexOf("timeout expired", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    break;
+                }
+
+                System.Threading.Thread.Sleep(1500);
+                postCount++;
+            }
+
+            iMSFileInfoScanner.MSFileScannerErrorCodes errorCode;
+
+            if (successPosting)
+            {
+                errorCode = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
+            }
+            else
+            {
+                errorCode = mMsFileScanner.ErrorCode;
+                mMsg = "Error posting dataset info XML. Message = " +
+                        mMsFileScanner.GetErrorMessage() + " returnData code = " + (int)mMsFileScanner.ErrorCode;
+                LogError(mMsg);
+            }
+
+            if (errorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
+            {
+                // Everything went wonderfully
+                errorMessage = string.Empty;
+                return true;
+            }
+
+            // Either a non-zero error code was returned, or an error event was received
+            errorMessage = "Error posting dataset info XML";
+            return false;
+        }
+
+        private void ProcessMultiDatasetInfoScannerResults(
+            string outputPathBase,
+            DatasetInfoXmlMerger datasetXmlMerger,
+            string datasetInfoXML,
+            IEnumerable<string> outputDirectoryNames)
+        {
+            var combinedDatasetInfoFilename = mDataset + "_Combined_DatasetInfo.xml";
+
+            try
+            {
+                // Write the combined XML to disk
+                var combinedXmlFilePath = Path.Combine(outputPathBase, combinedDatasetInfoFilename);
+
+                using var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                xmlWriter.WriteLine(datasetInfoXML);
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset;
+
+                if (System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) &&
+                    !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
+                {
+                    LogWarning(msg + ": " + ex.Message);
+
+                    var localFilePath = Path.Combine(mWorkDir, combinedDatasetInfoFilename);
+
+                    try
+                    {
+                        using var xmlWriter = new StreamWriter(new FileStream(localFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                        xmlWriter.WriteLine(datasetInfoXML);
+                    }
+                    catch (Exception ex2)
+                    {
+                        var msg2 = "Exception creating the combined _DatasetInfo.xml file in directory " + mWorkDir;
+                        LogWarning(msg2 + ": " + ex2.Message);
+                    }
+
+                    return;
+                }
+
+                LogError(msg, ex);
+            }
+
+            try
+            {
+                var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""", RegexOptions.IgnoreCase);
+
+                // Create an index.html file that shows all the plots in the subdirectories
+                var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
+
+                using var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                // ReSharper disable once StringLiteralTypo
+                htmlWriter.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
+                htmlWriter.WriteLine("<html>");
+                htmlWriter.WriteLine("<head>");
+                htmlWriter.WriteLine("  <title>" + mDataset + "</title>");
+                htmlWriter.WriteLine("  <style>");
+                htmlWriter.WriteLine("     table.DataTable {");
+                htmlWriter.WriteLine("       margin: 10px 5px 5px 5px;");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       border-collapse: collapse;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("     th.DataHead {");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       padding: 2px 4px 2px 2px; ");
+                htmlWriter.WriteLine("       text-align: left;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("     td.DataCell {");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       padding: 2px 4px 2px 4px;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("     td.DataCentered {");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       padding: 2px 4px 2px 4px;");
+                htmlWriter.WriteLine("       text-align: center;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine("  </style>");
+                htmlWriter.WriteLine("</head>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("<body>");
+                htmlWriter.WriteLine("  <h2>" + mDataset + "</h2>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("  <table>");
+
+                foreach (var subdirectoryName in outputDirectoryNames)
+                {
+                    var subdirectoryInfo = new DirectoryInfo(Path.Combine(outputPathBase, subdirectoryName));
+                    var htmlFiles = subdirectoryInfo.GetFiles("index.html");
+
+                    if (htmlFiles.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    using var htmlReader = new StreamReader(new FileStream(htmlFiles[0].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                    var processingTable = false;
+                    var htmlToAppend = new List<string>();
+                    var htmlHasImageInfo = false;
+                    var rowDepth = 0;
+
+                    while (!htmlReader.EndOfStream)
+                    {
+                        var dataLine = htmlReader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            continue;
+                        }
+
+                        var lineTrimmed = dataLine.Trim();
+
+                        if (processingTable)
+                        {
+                            var rowAdded = false;
+
+                            // Look for png files
+                            if (pngMatcher.IsMatch(dataLine))
+                            {
+                                // Match found; prepend the subdirectory name
+                                dataLine = pngMatcher.Replace(dataLine, '"' + subdirectoryInfo.Name + "/${Filename}" + '"');
+                                htmlHasImageInfo = true;
+                            }
+
+                            if (lineTrimmed.StartsWith("<tr>"))
+                            {
+                                // Start of a table row
+                                rowDepth++;
+
+                                htmlToAppend.Add(dataLine);
+                                rowAdded = true;
+                            }
+
+                            if (lineTrimmed.EndsWith("</tr>"))
+                            {
+                                // End of a table row
+                                if (!rowAdded)
+                                {
+                                    htmlToAppend.Add(dataLine);
+                                    rowAdded = true;
+                                }
+                                rowDepth--;
+
+                                if (rowDepth == 0 && htmlToAppend.Count > 0)
+                                {
+                                    if (htmlHasImageInfo)
+                                    {
+                                        // Write this set of rows out to the new index.html file
+                                        foreach (var outRow in htmlToAppend)
+                                        {
+                                            htmlWriter.WriteLine(outRow);
+                                        }
+                                    }
+                                    htmlToAppend.Clear();
+                                    htmlHasImageInfo = false;
+                                }
+                            }
+
+                            if (rowDepth == 0 && lineTrimmed.StartsWith("</table>"))
+                            {
+                                // Done processing the main table
+                                // Stop parsing this file
+                                break;
+                            }
+
+                            if (!rowAdded)
+                            {
+                                htmlToAppend.Add(dataLine);
+                            }
+                        }
+                        else if (dataLine.Trim().StartsWith("<table>"))
+                        {
+                            processingTable = true;
+                        }
+                    }
+                }
+
+                // Add the combined stats
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
+                htmlWriter.WriteLine("    </tr>");
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("      <td>&nbsp;</td>");
+                htmlWriter.WriteLine("      <td align=\"right\">Combined Stats:</td>");
+                // ReSharper disable once StringLiteralTypo
+                htmlWriter.WriteLine("      <td valign=\"middle\">");
+                htmlWriter.WriteLine("        <table class=\"DataTable\">");
+                htmlWriter.WriteLine("          <tr><th class=\"DataHead\">Scan Type</th><th class=\"DataHead\">Scan Count</th><th class=\"DataHead\">Scan Filter Text</th></tr>");
+
+                foreach (var item in datasetXmlMerger.ScanTypes)
+                {
+                    var scanTypeName = item.Key.Key;
+                    var scanCount = item.Value;
+
+                    htmlWriter.WriteLine("          <tr><td class=\"DataCell\">" + scanTypeName + "</td><td class=\"DataCentered\">" + scanCount + "</td><td class=\"DataCell\"</td></tr>");
+                }
+
+                htmlWriter.WriteLine("        </table>");
+                htmlWriter.WriteLine("      </td>");
+                htmlWriter.WriteLine("    </tr>");
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
+                htmlWriter.WriteLine("    </tr>");
+
+                // Add a link to the Dataset detail report
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("      <td>&nbsp;</td>");
+                htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + mDataset + "\">Dataset Detail Report</a></td>");
+                htmlWriter.WriteLine("      <td align=\"center\"><a href=\"" + combinedDatasetInfoFilename + "\">Dataset Info XML file</a></td>");
+                htmlWriter.WriteLine("    </tr>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("  </table>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("</body>");
+                htmlWriter.WriteLine("</html>");
+                htmlWriter.WriteLine();
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception creating the combined _DatasetInfo.xml file for " + mDataset, ex);
+            }
         }
 
         /// <summary>
