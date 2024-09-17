@@ -85,13 +85,13 @@ namespace CaptureTaskManager
         bool DetectStatusFlagFile();
 
         /// <summary>
-        /// Updates status file
+        /// Update cached progress, write the status file, and optionally send the status to the message queue
         /// </summary>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         void UpdateAndWrite(float percentComplete);
 
         /// <summary>
-        /// Updates status file
+        /// Update cached progress, write the status file, and optionally send the status to the message queue
         /// </summary>
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>

@@ -384,7 +384,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Writes the status to the message queue
+        /// Sends the status to the message queue
         /// </summary>
         /// <param name="statusXML">A string containing the XML to write</param>
         private void LogStatusToMessageQueue(string statusXML)
@@ -393,7 +393,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Updates status file
+        /// Update the Progress property, write the status file, and optionally send the status to the message queue
         /// (Overload to update when completion percentage is the only change)
         /// </summary>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
@@ -404,7 +404,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Updates status file
+        /// Update the Task Status and Progress properties, write the status file, and optionally send the status to the message queue
         /// (Overload to update file when status and completion percentage change)
         /// </summary>
         /// <param name="status">Job status enum</param>
@@ -513,7 +513,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Writes the status file
+        /// Write the status file and optionally sends the status to the message queue
         /// </summary>
         public void WriteStatusFile()
         {
