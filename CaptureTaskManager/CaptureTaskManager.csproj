@@ -82,4 +82,20 @@
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot;" />
     <Exec Command="xcopy &quot;$(TargetDir)runtimes&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; /S /D /Y" />
   </Target>
+  <!-- Tasks to complete after doing a clean, to clear out the contents of DeployedFiles and thereby remove old or incorrect dlls. -->
+  <Target Name="PostClean" AfterTargets="Clean">
+    <Exec Command="del /F &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\*.config&quot;" />
+    <Exec Command="del /F &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\*.json&quot;" />
+    <Exec Command="del /F &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\*.exe&quot;" />
+    <Exec Command="del /F &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\*.dll&quot;" />
+    <Exec Command="del /F &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\*.pdb&quot;" />
+    <Exec Command="del /F &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\*.xml&quot;" />
+  </Target>
+  <Target Name="PostCleanSQLiteNet48" AfterTargets="Clean" Condition="'$(TargetFramework)'!='net8.0-windows'">
+    <Exec Command="rmdir /S /Q &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot;" />
+    <Exec Command="rmdir /S /Q &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot;" />
+  </Target>
+  <Target Name="PostCleanSQLiteNet80" AfterTargets="Clean" Condition="'$(TargetFramework)'=='net8.0-windows'">
+    <Exec Command="rmdir /S /Q &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot;" />
+  </Target>
 </Project>
