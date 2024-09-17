@@ -48,32 +48,36 @@ namespace DatasetInfoPlugin
             AllPlots = 2
         }
 
-        private string mMsg;
+        private int mCurrentDatasetNumber;
 
         private int mFailedScanCount;
-
-        private DateTime mLastProgressUpdate;
-
-        private DateTime mLastStatusUpdate;
-
-        private DateTime mProcessingStartTime;
-
-        private ProcessingStatus mProcessingStatus;
-
-        private string mMsFileInfoScannerExePath;
-
-        private readonly InfoScannerOptions mMsFileScannerOptions;
-
-        private readonly LCMSDataPlotterOptions mLCMS2DPlotOptions;
-
-        private string mStatusFilePath;
-
-        private readonly StatusFileTools mStatusFileTools;
 
         /// <summary>
         /// Property to flag if this is being run specifically for LC data capture
         /// </summary>
         protected virtual bool IsLcDataCapture => false;
+
+        private DateTime mLastProgressUpdate;
+
+        private DateTime mLastStatusUpdate;
+
+        private readonly LCMSDataPlotterOptions mLCMS2DPlotOptions;
+
+        private string mMsFileInfoScannerExePath;
+
+        private readonly InfoScannerOptions mMsFileScannerOptions;
+
+        private string mMsg;
+
+        private DateTime mProcessingStartTime;
+
+        private ProcessingStatus mProcessingStatus;
+
+        private string mStatusFilePath;
+
+        private readonly StatusFileTools mStatusFileTools;
+
+        private int mTotalDatasetFilesOrDirectories;
 
         /// <summary>
         /// Constructor
@@ -214,9 +218,9 @@ namespace DatasetInfoPlugin
                 out var instrumentClass,
                 out var brukerDotDBaf);
 
-            var totalDatasetFilesOrDirectories = fileOrDirectoryRelativePaths.Count;
+            mTotalDatasetFilesOrDirectories = fileOrDirectoryRelativePaths.Count;
 
-            if (totalDatasetFilesOrDirectories > 0 && fileOrDirectoryRelativePaths.First() == UNKNOWN_FILE_TYPE)
+            if (mTotalDatasetFilesOrDirectories > 0 && fileOrDirectoryRelativePaths.First() == UNKNOWN_FILE_TYPE)
             {
                 // Raw_Data_Type not recognized
                 returnData.CloseoutMsg = mMsg;
@@ -227,7 +231,7 @@ namespace DatasetInfoPlugin
             var rawDataTypeName = InstrumentClassInfo.GetDataFormatName(rawDataType);
             var instClass = InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
 
-            if (totalDatasetFilesOrDirectories > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
+            if (mTotalDatasetFilesOrDirectories > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
             {
                 // DS Info not implemented for this file type
                 returnData.CloseoutMsg = string.Empty;
@@ -252,7 +256,7 @@ namespace DatasetInfoPlugin
                 returnData.EvalMsg = $"Dataset info is not implemented for data type {rawDataTypeName}, instrument class {instClass}";
             }
 
-            if (totalDatasetFilesOrDirectories == 0 || string.IsNullOrEmpty(fileOrDirectoryRelativePaths.First()))
+            if (mTotalDatasetFilesOrDirectories == 0 || string.IsNullOrEmpty(fileOrDirectoryRelativePaths.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
                 returnData.CloseoutMsg = mMsg;
@@ -329,13 +333,13 @@ namespace DatasetInfoPlugin
             var primaryFileOrDirectoryProcessed = false;
 
             var nextSubdirectorySuffix = 1;
-            var currentItemNumber = 0;
             var successCount = 0;
+            mCurrentDatasetNumber = 0;
 
             foreach (var datasetFileOrDirectory in fileOrDirectoryRelativePaths)
             {
                 mFailedScanCount = 0;
-                currentItemNumber++;
+                mCurrentDatasetNumber++;
 
                 // Reset this for each input file or directory
                 mProcessingStatus.ErrorCode = 0;
@@ -435,7 +439,7 @@ namespace DatasetInfoPlugin
                 }
 
                 var currentOutputDirectory = ConstructOutputDirectoryPath(
-                    outputPathBase, datasetFileOrDirectory, totalDatasetFilesOrDirectories,
+                    outputPathBase, datasetFileOrDirectory, mTotalDatasetFilesOrDirectories,
                     outputDirectoryNames, ref nextSubdirectorySuffix);
 
                 if (string.IsNullOrWhiteSpace(currentOutputDirectory))
@@ -661,7 +665,7 @@ namespace DatasetInfoPlugin
 
                     if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        if (totalDatasetFilesOrDirectories == 1 || currentItemNumber == totalDatasetFilesOrDirectories)
+                        if (mTotalDatasetFilesOrDirectories == 1 || mCurrentDatasetNumber == mTotalDatasetFilesOrDirectories)
                         {
                             return returnData;
                         }
@@ -716,7 +720,7 @@ namespace DatasetInfoPlugin
                 }
                 // ReSharper restore HeuristicUnreachableCode
 
-                if (primaryFileOrDirectoryProcessed || totalDatasetFilesOrDirectories > 1 && currentItemNumber < totalDatasetFilesOrDirectories)
+                if (primaryFileOrDirectoryProcessed || mTotalDatasetFilesOrDirectories > 1 && mCurrentDatasetNumber < mTotalDatasetFilesOrDirectories)
                 {
                     // MSFileInfoScanner already processed the primary file or directory
                     // Mention this failure in the EvalMsg but still return success
@@ -796,7 +800,7 @@ namespace DatasetInfoPlugin
             // If cachedDatasetInfoXml contains just one item, simply return it
             var datasetXmlMerger = new DatasetInfoXmlMerger();
 
-            var combinedDatasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML, totalDatasetFilesOrDirectories);
+            var combinedDatasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML, mTotalDatasetFilesOrDirectories);
 
             if (cachedDatasetInfoXML.Count > 1)
             {
@@ -2080,6 +2084,10 @@ namespace DatasetInfoPlugin
 
             ParseStatusFile();
 
+            var overallProgress = ComputeIncrementalProgress(
+                mCurrentDatasetNumber,
+                mTotalDatasetFilesOrDirectories,
+                mProcessingStatus.ProgressPercentComplete);
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds < 300)
                 return;
 

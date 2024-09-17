@@ -316,6 +316,24 @@ namespace CaptureTaskManager
             return true;
         }
 
+        /// <summary>
+        /// Computes the overall progress, given a number of steps and the progress on the current step
+        /// </summary>
+        /// <param name="currentStep">Current step number (minimum value is 1)</param>
+        /// <param name="totalSteps">Total number of steps (number of times a loop will run)</param>
+        /// <param name="subTaskProgress">Progress for the current step (value between 0 and 100)</param>
+        /// <returns>Overall progress (value between 0 and 100)</returns>
+        public static float ComputeIncrementalProgress(int currentStep, int totalSteps, float subTaskProgress)
+        {
+            if (totalSteps <= 1)
+                return subTaskProgress;
+
+            if (currentStep < 1)
+                currentStep = 1;
+
+            return (currentStep - 1) / (float)totalSteps * 100 + subTaskProgress / totalSteps;
+        }
+
         // Used by CTM plugins
         // ReSharper disable once UnusedMember.Global
         protected void DeleteFileIgnoreErrors(string filePath)
