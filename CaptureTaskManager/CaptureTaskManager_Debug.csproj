@@ -62,12 +62,14 @@
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(ProjectDir)Config_Files\db.config&quot; &quot;$(TargetPath).db.*&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(ProjectDir)Config_Files\local.config&quot; &quot;$(TargetPath).local.*&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(ProjectDir)..\RefLib\DLLVersionInspector*.exe&quot; &quot;$(TargetDir)&quot; /D /Y" />
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot;" />
     <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
-    <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).*&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
-    <Exec Command="xcopy &quot;$(TargetDir)*.config&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetPath).config&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetPath).db.config&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)plugin_info.xml&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
   </Target>

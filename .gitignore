@@ -1,24 +1,10 @@
 ._.DS_Store
 .DS_Store
 ._*
-ArchiveStatusCheckPlugin/obj/
-ArchiveVerifyPlugin/bin/Debug/PRISM.xml
-ArchiveVerifyPlugin/obj/Debug/ArchiveVerifyPlugin.csproj.FileListAbsolute.txt
-ArchiveVerifyPlugin/obj/Debug/TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs
-ArchiveVerifyPlugin/obj/
-CaptureTaskManager/bin/
-CaptureTaskManager/obj/
-CTM_Shared/bin/
-CTM_Shared/obj/
-CaptureToolPlugin/obj/
-DatasetArchivePlugin/bin/
-*obj/Debug/*
-SrcFileRenamePlugin/obj/
-ImsDemuxPlugin/obj/
-DatasetQualityPlugin/obj/
-DatasetIntegrityPlugin/obj/
-DatasetInfoPlugin/obj/
-DatasetArchivePlugin/obj//
+
+**/bin/
+**/obj/
+**/.vs/
 
 DeployedFiles/*.dll
 DeployedFiles/*/*.dll
@@ -26,10 +12,5 @@ DeployedFiles/*.pdb
 DeployedFiles/*.exe
 DeployedFiles/*.lnk
 
-/DeployedFiles/ThermoFisher.CommonCore.BackgroundSubtraction.xml
-/DeployedFiles/ThermoFisher.CommonCore.Data.xml
-/DeployedFiles/ThermoFisher.CommonCore.MassPrecisionEstimator.xml
-/DeployedFiles/ThermoFisher.CommonCore.RawFileReader.xml
-/DeployedFiles/ThermoRawFileReader.dll.config
-**/.vs/
-/RefLib/PRISM.dll
+/DeployedFiles/net48/
+/DeployedFiles/net8.0-windows/
