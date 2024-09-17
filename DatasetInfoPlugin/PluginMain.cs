@@ -576,6 +576,7 @@ namespace DatasetInfoPlugin
                 }
 
                 LogMessage("MsFileInfoScanner Complete");
+                mStatusTools.UpdateAndWrite(99);
 
                 if (mProcessingStatus.ErrorCode != iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
                 {
@@ -2088,6 +2089,9 @@ namespace DatasetInfoPlugin
                 mCurrentDatasetNumber,
                 mTotalDatasetFilesOrDirectories,
                 mProcessingStatus.ProgressPercentComplete);
+
+            mStatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, overallProgress);
+
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds < 300)
                 return;
 
