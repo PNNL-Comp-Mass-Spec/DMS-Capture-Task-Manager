@@ -1015,7 +1015,7 @@ namespace CaptureTaskManager
                 // Create the tool runner object
                 if (!SetToolRunnerObject(mStepTool))
                 {
-                    const string errMsg = "Unable to SetToolRunnerObject";
+                    const string errMsg = "Unable to set the tool runner object";
                     LogError(mMgrName + ": " + errMsg + ", job " + mJob + ", Dataset " + mDataset, true);
 
                     mTask.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, errMsg);
