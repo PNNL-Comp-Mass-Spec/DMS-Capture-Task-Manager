@@ -327,6 +327,7 @@ namespace DatasetInfoPlugin
             // Typically only call it once, but for Bruker datasets with multiple .d directories, we'll call it once for each .d directory
 
             mMsg = string.Empty;
+            var errorCodeToReturn = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
 
             var cachedDatasetInfoXML = new List<string>();
             var outputDirectoryNames = new List<string>();
@@ -557,6 +558,8 @@ namespace DatasetInfoPlugin
                 // Parse the status file one more time
                 ParseStatusFile();
 
+                iMSFileInfoScanner.MSFileScannerErrorCodes errorCodeToUse;
+
                 if (!successProcessing)
                 {
                     if (cmdRunner.ExitCode != 0)
@@ -576,27 +579,44 @@ namespace DatasetInfoPlugin
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         return returnData;
                     }
+
+                    if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
+                    {
+                        errorCodeToUse = Enum.TryParse(cmdRunner.ExitCode.ToString(), out iMSFileInfoScanner.MSFileScannerErrorCodes errorCode)
+                            ? errorCode
+                            : iMSFileInfoScanner.MSFileScannerErrorCodes.UnspecifiedError;
+                    }
+                    else
+                    {
+                        errorCodeToUse = mProcessingStatus.ErrorCode;
+                    }
+
+                    if (errorCodeToReturn == iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
+                    {
+                        errorCodeToReturn = errorCodeToUse;
+                    }
                 }
                 else
                 {
                     LogMessage("MsFileInfoScanner Complete");
+                    errorCodeToUse = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
                 }
 
                 mStatusTools.UpdateAndWrite(99);
 
-                if (mProcessingStatus.ErrorCode != iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
+                if (errorCodeToUse != iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
                 {
                     successProcessing = false;
                 }
 
-                if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.ThermoRawFileReaderError)
+                if (errorCodeToUse == iMSFileInfoScanner.MSFileScannerErrorCodes.ThermoRawFileReaderError)
                 {
                     // Call to .OpenRawFile failed
                     mMsg = "Error running MSFileInfoScanner: Call to .OpenRawFile failed";
                     LogError(mMsg);
                     successProcessing = false;
                 }
-                else if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.DatasetHasNoSpectra)
+                else if (errorCodeToUse == iMSFileInfoScanner.MSFileScannerErrorCodes.DatasetHasNoSpectra)
                 {
                     // Dataset has no spectra
                     // If the instrument class is BrukerFT_BAF and the dataset has an analysis.baf file but no ser or fid file, treat this as a warning
@@ -646,7 +666,7 @@ namespace DatasetInfoPlugin
                     mFileTools.DeleteDirectory(localDirectoryPath);
                 }
 
-                var mzMinValidationError = mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
+                var mzMinValidationError = errorCodeToUse == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
 
                 if (mzMinValidationError)
                 {
@@ -654,7 +674,7 @@ namespace DatasetInfoPlugin
                     successProcessing = false;
                 }
 
-                if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationWarning)
+                if (errorCodeToUse == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationWarning)
                 {
                     var warningMsg = mProcessingStatus.MS2MzMinValidationMessage;
                     returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
@@ -743,7 +763,7 @@ namespace DatasetInfoPlugin
                         {
                             mMsg = "ProcessMSFileOrFolder returned false. Message = " +
                                    mProcessingStatus.ErrorMessage +
-                                   " returnData code = " + (int)mProcessingStatus.ErrorCode;
+                                   " returnData code = " + (int)errorCodeToUse;
                         }
 
                         LogError(mMsg);
@@ -850,7 +870,7 @@ namespace DatasetInfoPlugin
                 {
                     mMsg = "ProcessMSFileOrFolder returned false. Message = " +
                            mProcessingStatus.ErrorMessage +
-                           " returnData code = " + (int)mProcessingStatus.ErrorCode;
+                           " returnData code = " + (int)errorCodeToReturn;
                 }
 
                 LogError(mMsg);
