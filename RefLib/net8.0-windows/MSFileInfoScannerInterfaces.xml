@@ -864,6 +864,11 @@
             Processing status date/time
             </summary>
         </member>
+        <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.MS2MzMinValidationMessage">
+            <summary>
+            MS2MzMin validation error or warning message
+            </summary>
+        </member>
         <member name="P:MSFileInfoScannerInterfaces.ProcessingStatus.ProgressMessage">
             <summary>
             Progress message
