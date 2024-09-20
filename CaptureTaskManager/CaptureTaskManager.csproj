@@ -60,7 +60,7 @@
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)Config_Files\db.config&quot; &quot;$(TargetPath).db.*&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(ProjectDir)Config_Files\db.config&quot; &quot;$(TargetPath).db.*&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)\CaptureTaskManager.exe&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\&quot; /D /Y /F" />
     <Exec Command="xcopy &quot;$(ProjectDir)Config_Files\local.config&quot; &quot;$(TargetPath).local.*&quot; /D /Y" />
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot;" />
     <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
