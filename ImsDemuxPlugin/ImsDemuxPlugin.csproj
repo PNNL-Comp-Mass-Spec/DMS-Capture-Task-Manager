@@ -16,9 +16,6 @@
     <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Properties\**" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\version.json">
       <Link>Properties\version.json</Link>
     </None>

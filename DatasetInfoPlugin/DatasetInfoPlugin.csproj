@@ -16,7 +16,6 @@
     <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Properties\**" />
     <Compile Remove="_Trash\**" />
     <EmbeddedResource Remove="_Trash\**" />
     <None Remove="_Trash\**" />
