@@ -559,9 +559,6 @@ namespace DatasetInfoPlugin
 
                 if (!successProcessing)
                 {
-                    returnData.CloseoutMsg = "Error running MsFileInfoScanner";
-                    LogError(returnData.CloseoutMsg);
-
                     if (cmdRunner.ExitCode != 0)
                     {
                         LogWarning("MsFileInfoScanner returned a non-zero exit code: " + cmdRunner.ExitCode);
@@ -571,11 +568,20 @@ namespace DatasetInfoPlugin
                         LogWarning("Call to MsFileInfoScanner failed (but exit code is 0)");
                     }
 
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return returnData;
+                    if (cmdRunner.ExitCode <= 0)
+                    {
+                        returnData.CloseoutMsg = "Error running MsFileInfoScanner";
+                        LogError(returnData.CloseoutMsg);
+
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return returnData;
+                    }
+                }
+                else
+                {
+                    LogMessage("MsFileInfoScanner Complete");
                 }
 
-                LogMessage("MsFileInfoScanner Complete");
                 mStatusTools.UpdateAndWrite(99);
 
                 if (mProcessingStatus.ErrorCode != iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
@@ -942,8 +948,8 @@ namespace DatasetInfoPlugin
         /// Check whether the experiment for this dataset has a labelling value defined
         /// If it doesn't, or if it is Unknown or None, examine the dataset name
         /// </summary>
-        /// <param name="experimentName"></param>
-        /// <param name="sampleLabelling"></param>
+        /// <param name="experimentName">Experiment name</param>
+        /// <param name="sampleLabelling">Sample labelling</param>
         private void ConfigureMinimumMzValidation(string experimentName, string sampleLabelling)
         {
             mMsFileScannerOptions.MS2MzMin = 0;
