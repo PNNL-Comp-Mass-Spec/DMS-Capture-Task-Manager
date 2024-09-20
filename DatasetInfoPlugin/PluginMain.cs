@@ -644,13 +644,13 @@ namespace DatasetInfoPlugin
 
                 if (mzMinValidationError)
                 {
-                    mMsg = mProcessingStatus.ErrorMessage;
+                    mMsg = mProcessingStatus.MS2MzMinValidationMessage;
                     successProcessing = false;
                 }
 
                 if (mProcessingStatus.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationWarning)
                 {
-                    var warningMsg = mProcessingStatus.ErrorMessage;
+                    var warningMsg = mProcessingStatus.MS2MzMinValidationMessage;
                     returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
