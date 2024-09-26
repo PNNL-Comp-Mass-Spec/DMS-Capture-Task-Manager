@@ -1561,7 +1561,18 @@ namespace DatasetInfoPlugin
 
         private void ParseStatusFile()
         {
-            mStatusFileTools.ReadStatusFile(mStatusFilePath, out mProcessingStatus);
+            if (File.Exists(mStatusFilePath))
+            {
+                mStatusFileTools.ReadStatusFile(mStatusFilePath, out mProcessingStatus);
+                return;
+            }
+
+            var runtimeMinutes = DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes;
+
+            if (runtimeMinutes < 2)
+                return;
+
+            LogWarning("Status file not found ({0:F0} minutes elapsed): {1}", runtimeMinutes, mStatusFilePath);
         }
 
         private bool PostDatasetInfoXml(string datasetInfoXML, out string errorMessage)
