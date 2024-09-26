@@ -30,8 +30,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PRISM-DatabaseUtils" Version="1.4.35" />
-    <PackageReference Include="PRISM-Library" Version="2.8.36" />
+    <PackageReference Include="PRISM-DatabaseUtils" Version="1.4.37" />
+    <PackageReference Include="PRISM-Library" Version="2.8.38" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CTM_Shared">
