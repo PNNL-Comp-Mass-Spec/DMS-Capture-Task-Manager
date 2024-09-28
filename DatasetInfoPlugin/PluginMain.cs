@@ -33,7 +33,7 @@ namespace DatasetInfoPlugin
 
         private const string INVALID_FILE_TYPE = "Invalid File Type";
 
-        private const int MAX_INFO_SCANNER_RUNTIME_HOURS = 24;
+        private const int MAX_INFO_SCANNER_RUNTIME_HOURS = 72;
 
         private const int MAX_INFO_SCANNER_RUNTIME_MINUTES = 60 * MAX_INFO_SCANNER_RUNTIME_HOURS;
 
