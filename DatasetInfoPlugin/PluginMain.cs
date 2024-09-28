@@ -39,6 +39,8 @@ namespace DatasetInfoPlugin
 
         private const string MS_FILE_SCANNER_DS_INFO_SP = "cache_dataset_info_xml";
 
+        private const string STORED_FILE_SUFFIX = ".stored";
+
         private const string UNKNOWN_FILE_TYPE = "Unknown File Type";
 
         private enum QCPlottingModes
@@ -330,6 +332,7 @@ namespace DatasetInfoPlugin
             var errorCodeToReturn = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
 
             var cachedDatasetInfoXML = new List<string>();
+            var datasetInfoFilesToRename = new List<FileInfo>();
             var outputDirectoryNames = new List<string>();
             var primaryFileOrDirectoryProcessed = false;
 
@@ -710,7 +713,7 @@ namespace DatasetInfoPlugin
                     if (mMsFileScannerOptions.CreateDatasetInfoFile)
                     {
                         // Read the DatasetInfo XML file and store in cachedDatasetInfoXML
-                        LoadDatasetInfoXML(currentOutputDirectory, cachedDatasetInfoXML);
+                        LoadDatasetInfoXML(currentOutputDirectory, cachedDatasetInfoXML, datasetInfoFilesToRename);
                     }
 
                     primaryFileOrDirectoryProcessed = true;
@@ -832,6 +835,26 @@ namespace DatasetInfoPlugin
             if (cachedDatasetInfoXML.Count > 1)
             {
                 ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, combinedDatasetInfoXML, outputDirectoryNames);
+            }
+
+            // Remove ".stored" from the files in datasetInfoFilesToRename
+            foreach (var datasetInfoFile in datasetInfoFilesToRename)
+            {
+                if (!datasetInfoFile.Name.EndsWith(STORED_FILE_SUFFIX))
+                {
+                    LogWarning("File in datasetInfoFilesToRename does not have suffix '.stored', which is unexpected: {0}", datasetInfoFile.FullName);
+                    continue;
+                }
+
+                var renamedFile = new FileInfo(datasetInfoFile.FullName.Substring(0, datasetInfoFile.FullName.Length - STORED_FILE_SUFFIX.Length));
+
+                if (renamedFile.Exists)
+                {
+                    LogWarning("Cannot remove '.stored' from dataset info file, since the target file already exists: {0}", renamedFile.FullName);
+                    continue;
+                }
+
+                datasetInfoFile.MoveTo(renamedFile.FullName);
             }
 
             // Check for dataset acq time gap warnings
@@ -1449,7 +1472,9 @@ namespace DatasetInfoPlugin
             return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.exe");
         }
 
-        private void LoadDatasetInfoXML(string currentOutputDirectory, ICollection<string> cachedDatasetInfoXML)
+        private void LoadDatasetInfoXML(
+            string currentOutputDirectory, ICollection<string> cachedDatasetInfoXML,
+            ICollection<FileInfo> datasetInfoFilesToRename)
         {
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);
 
@@ -1468,7 +1493,7 @@ namespace DatasetInfoPlugin
 
             foreach (var datasetInfoFile in filesToRename)
             {
-                var renamedFile = new FileInfo(datasetInfoFile.FullName + ".stored");
+                var renamedFile = new FileInfo(datasetInfoFile.FullName + STORED_FILE_SUFFIX);
 
                 if (renamedFile.Exists)
                 {
@@ -1476,6 +1501,7 @@ namespace DatasetInfoPlugin
                 }
 
                 datasetInfoFile.MoveTo(renamedFile.FullName);
+                datasetInfoFilesToRename.Add(datasetInfoFile);
             }
         }
 
