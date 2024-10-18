@@ -1143,8 +1143,12 @@ namespace DatasetInfoPlugin
         /// Add them to list fileOrDirectoryNames
         /// </summary>
         /// <param name="datasetDirectory">Dataset directory to examine</param>
+        /// <param name="initialFileOrDirectoryName">Optional file to look for if a .mcf file is not found</param>
         /// <param name="fileOrDirectoryRelativePaths">List to append .d directories to (calling function must initialize)</param>
-        private void FindDotDDirectories(DirectoryInfo datasetDirectory, ICollection<string> fileOrDirectoryRelativePaths)
+        private void FindDotDDirectories(
+            DirectoryInfo datasetDirectory,
+            string initialFileOrDirectoryName,
+            ICollection<string> fileOrDirectoryRelativePaths)
         {
             var looseMatchDotD = mTaskParams.GetParam("LooseMatchDotD", false);
 
@@ -1157,6 +1161,10 @@ namespace DatasetInfoPlugin
                 return;
             }
 
+            var alternateFileName = string.IsNullOrWhiteSpace(initialFileOrDirectoryName)
+                ? string.Empty
+                : Path.GetFileName(initialFileOrDirectoryName);
+
             // Look for a .mcf file in each of the .d directories
             foreach (var dotDDirectory in dotDDirectories)
             {
@@ -1164,7 +1172,13 @@ namespace DatasetInfoPlugin
 
                 if (!mcfFileExists)
                 {
-                    continue;
+                    if (!string.IsNullOrWhiteSpace(alternateFileName))
+                        continue;
+
+                    var matchingFiles = dotDDirectory.GetFiles(alternateFileName);
+
+                    if (matchingFiles.Length == 0)
+                        continue;
                 }
 
                 var relativeDirectoryPath = looseMatchDotD
@@ -1445,7 +1459,7 @@ namespace DatasetInfoPlugin
 
                 // Look for other .d directories
                 var fileOrDirectoryRelativePaths = new List<string> { fileOrDirectoryName };
-                FindDotDDirectories(datasetDirectory, fileOrDirectoryRelativePaths);
+                FindDotDDirectories(datasetDirectory, string.Empty, fileOrDirectoryRelativePaths);
 
                 return fileOrDirectoryRelativePaths;
             }
@@ -1546,7 +1560,7 @@ namespace DatasetInfoPlugin
 
             // With instrument class BrukerMALDI_Imaging_V2 (e.g. 15T_FTICR_Imaging) we allow multiple .d directories to be captured
             // Look for additional directories now
-            FindDotDDirectories(datasetDirectory, fileOrDirectoryNames);
+            FindDotDDirectories(datasetDirectory, initialFileOrDirectoryName, fileOrDirectoryNames);
 
             return fileOrDirectoryNames;
         }
