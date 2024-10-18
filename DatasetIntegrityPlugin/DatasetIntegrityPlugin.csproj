@@ -25,7 +25,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PRISM-Library" Version="2.8.38" />
+    <PackageReference Include="PRISM-Library" Version="2.8.39" />
     <PackageReference Include="PRISMWin-Library" Version="1.1.19" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
     <PackageReference Include="ThermoRawFileReader" Version="4.2.32" />

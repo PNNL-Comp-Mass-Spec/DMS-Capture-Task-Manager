@@ -28,7 +28,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="PRISM-Library" Version="2.8.38" />
+    <PackageReference Include="PRISM-Library" Version="2.8.39" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CTM_Shared">
