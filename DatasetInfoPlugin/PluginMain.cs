@@ -1154,6 +1154,14 @@ namespace DatasetInfoPlugin
 
             var searchOption = looseMatchDotD ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
+            // Example log messages:
+            // Looking for .d directories in the dataset directory: dataset_directory_path
+            // Looking for .d directories in the dataset directory and its subdirectories: dataset_directory_path
+
+            LogDebug("Looking for .d directories in the dataset directory{0}: {1}",
+                looseMatchDotD ? " and its subdirectories" : string.Empty,
+                datasetDirectory.FullName);
+
             var dotDDirectories = datasetDirectory.GetDirectories("*.d", searchOption);
 
             if (dotDDirectories.Length == 0)
@@ -1168,6 +1176,8 @@ namespace DatasetInfoPlugin
             // Look for a .mcf file in each of the .d directories
             foreach (var dotDDirectory in dotDDirectories)
             {
+                LogDebug("Looking for .mcf files in: {0}", dotDDirectory.FullName);
+
                 var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out _);
 
                 if (!mcfFileExists)
@@ -1175,10 +1185,13 @@ namespace DatasetInfoPlugin
                     if (!string.IsNullOrWhiteSpace(alternateFileName))
                         continue;
 
+                    LogDebug("Looking for file {0} in: {1}", alternateFileName, dotDDirectory.FullName);
                     var matchingFiles = dotDDirectory.GetFiles(alternateFileName);
 
                     if (matchingFiles.Length == 0)
                         continue;
+
+                    LogDebug("Found file {0}", matchingFiles[0].FullName);
                 }
 
                 var relativeDirectoryPath = looseMatchDotD
@@ -1187,6 +1200,7 @@ namespace DatasetInfoPlugin
 
                 if (!fileOrDirectoryRelativePaths.Contains(relativeDirectoryPath))
                 {
+                    LogDebug("Adding directory {0} to fileOrDirectoryRelativePaths", relativeDirectoryPath);
                     fileOrDirectoryRelativePaths.Add(relativeDirectoryPath);
                 }
             }
