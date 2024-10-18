@@ -1182,7 +1182,7 @@ namespace DatasetInfoPlugin
 
                 if (!mcfFileExists)
                 {
-                    if (!string.IsNullOrWhiteSpace(alternateFileName))
+                    if (string.IsNullOrWhiteSpace(alternateFileName))
                         continue;
 
                     LogDebug("Looking for file {0} in: {1}", alternateFileName, dotDDirectory.FullName);
