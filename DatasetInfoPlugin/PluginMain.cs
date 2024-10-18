@@ -1473,7 +1473,8 @@ namespace DatasetInfoPlugin
 
                 // Look for other .d directories
                 var fileOrDirectoryRelativePaths = new List<string> { fileOrDirectoryName };
-                FindDotDDirectories(datasetDirectory, string.Empty, fileOrDirectoryRelativePaths);
+
+                FindDotDDirectories(datasetDirectory, fileOrDirectoryName, fileOrDirectoryRelativePaths);
 
                 return fileOrDirectoryRelativePaths;
             }
@@ -1582,7 +1583,7 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Look for any .mcf file in a Bruker .d directory
         /// </summary>
-        /// <param name="dotDDirectory"></param>
+        /// <param name="dotDDirectory">Bruker .d directory to search</param>
         /// <param name="dotDDirectoryName">Output: name of the .d directory</param>
         /// <returns>True if a .mcf file is found</returns>
         private bool LookForMcfFileInDotDDirectory(DirectoryInfo dotDDirectory, out string dotDDirectoryName)
