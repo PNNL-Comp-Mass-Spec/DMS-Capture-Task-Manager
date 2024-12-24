@@ -113,7 +113,7 @@ namespace CaptureTaskManager
 
             DatabaseLogger dbLogger = databaseType switch
             {
-                DbServerTypes.MSSQLServer => new SQLServerDatabaseLogger(),
+                DbServerTypes.MSSQLServer => new PRISMDatabaseUtils.Logging.SQLServerDatabaseLogger(),
                 DbServerTypes.PostgreSQL => new PostgresDatabaseLogger(),
                 _ => throw new Exception("Unsupported database connection string: should be SQL Server or Postgres")
             };
