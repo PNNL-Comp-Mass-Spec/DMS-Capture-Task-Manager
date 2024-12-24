@@ -950,7 +950,7 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="datasetDirectory">Dataset directory</param>
         /// <returns>Returns the file name if found, otherwise an empty string</returns>
-        private string CheckForBrukerImagingZipFiles(DirectoryInfo datasetDirectory)
+        private static string CheckForBrukerImagingZipFiles(DirectoryInfo datasetDirectory)
         {
             var zipFiles = datasetDirectory.GetFiles("0_R*X*.zip");
 
@@ -1501,9 +1501,9 @@ namespace DatasetInfoPlugin
             return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.exe");
         }
 
-        private void LoadDatasetInfoXML(
             string currentOutputDirectory, ICollection<string> cachedDatasetInfoXML,
             ICollection<FileInfo> datasetInfoFilesToRename)
+        private static void LoadDatasetInfoXML(
         {
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);
 
@@ -1586,7 +1586,7 @@ namespace DatasetInfoPlugin
         /// <param name="dotDDirectory">Bruker .d directory to search</param>
         /// <param name="dotDDirectoryName">Output: name of the .d directory</param>
         /// <returns>True if a .mcf file is found</returns>
-        private bool LookForMcfFileInDotDDirectory(DirectoryInfo dotDDirectory, out string dotDDirectoryName)
+        private static bool LookForMcfFileInDotDDirectory(DirectoryInfo dotDDirectory, out string dotDDirectoryName)
         {
             var mcfFilesWithExtras = dotDDirectory.GetFiles("*" + BRUKER_MCF_FILE_EXTENSION);
 
@@ -2056,7 +2056,7 @@ namespace DatasetInfoPlugin
             }
         }
 
-        private bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, ToolReturnData returnData)
+        private static bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, ToolReturnData returnData)
         {
             // Make sure at least one of the PNG files created by MSFileInfoScanner is over 10 KB in size
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);

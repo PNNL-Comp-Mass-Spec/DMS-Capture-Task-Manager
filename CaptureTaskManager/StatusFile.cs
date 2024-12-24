@@ -140,7 +140,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Returns the directory path that contains the program .exe
         /// </summary>
-        private string AppDirectoryPath()
+        private static string AppDirectoryPath()
         {
             return AppUtils.GetAppDirectoryPath();
         }
@@ -179,7 +179,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusEnum">An IStatusFile.EnumMgrStatus object</param>
         /// <returns>String representation of input object</returns>
-        private string ConvertMgrStatusToString(EnumMgrStatus statusEnum)
+        private static string ConvertMgrStatusToString(EnumMgrStatus statusEnum)
         {
             return statusEnum.ToString("G");
         }
@@ -189,7 +189,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusEnum">An IStatusFile.EnumTaskStatus object</param>
         /// <returns>String representation of input object</returns>
-        private string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
+        private static string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
         {
             return statusEnum.ToString("G");
         }
@@ -199,7 +199,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusEnum">An IStatusFile.EnumTaskStatusDetail object</param>
         /// <returns>String representation of input object</returns>
-        private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail statusEnum)
+        private static string ConvertTaskStatusDetailToString(EnumTaskStatusDetail statusEnum)
         {
             return statusEnum.ToString("G");
         }
@@ -252,7 +252,7 @@ namespace CaptureTaskManager
             return File.Exists(flagFilePath);
         }
 
-        private string GenerateStatusXML(
+        private static string GenerateStatusXML(
             StatusFile status,
             DateTime lastUpdate,
             int processId,
@@ -289,7 +289,7 @@ namespace CaptureTaskManager
             writer.WriteStartElement("Root");
             writer.WriteStartElement("Manager");
             writer.WriteElementString("MgrName", ValidateTextLength(status.MgrName, 128));
-            writer.WriteElementString("MgrStatus", ValidateTextLength(status.ConvertMgrStatusToString(status.MgrStatus), 50));
+            writer.WriteElementString("MgrStatus", ValidateTextLength(ConvertMgrStatusToString(status.MgrStatus), 50));
 
             writer.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
             writer.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
@@ -324,14 +324,14 @@ namespace CaptureTaskManager
 
             writer.WriteStartElement("Task");
             writer.WriteElementString("Tool", ValidateTextLength(status.Tool, 128));
-            writer.WriteElementString("Status", ValidateTextLength(status.ConvertTaskStatusToString(status.TaskStatus), 50));
+            writer.WriteElementString("Status", ValidateTextLength(ConvertTaskStatusToString(status.TaskStatus), 50));
             writer.WriteElementString("Duration", runTimeHours.ToString("0.00"));
             writer.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
             writer.WriteElementString("Progress", status.Progress.ToString("##0.00"));
             writer.WriteElementString("CurrentOperation", ValidateTextLength(status.CurrentOperation, 255));
 
             writer.WriteStartElement("TaskDetails");
-            writer.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
+            writer.WriteElementString("Status", ConvertTaskStatusDetailToString(status.TaskStatusDetail));
             writer.WriteElementString("Job", status.JobNumber.ToString());
             writer.WriteElementString("Step", status.JobStep.ToString());
             writer.WriteElementString("Dataset", ValidateTextLength(status.Dataset, 255));
@@ -354,7 +354,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Return the ProcessID of the Analysis manager
         /// </summary>
-        public int GetProcessID()
+        public static int GetProcessID()
         {
             return Process.GetCurrentProcess().Id;
         }

@@ -103,7 +103,7 @@ namespace CaptureTaskManager
         /// <param name="moduleName">Module name used by logger</param>
         /// <param name="traceMode">When true, show additional debug messages at the console</param>
         /// <param name="logLevel">Log threshold level</param>
-        private void CreateDbLogger(
+        private static void CreateDbLogger(
             string connectionString,
             string moduleName,
             bool traceMode = false,
@@ -235,7 +235,7 @@ namespace CaptureTaskManager
             return restartOK;
         }
 
-        protected string GetStoragePathBase()
+        private string GetStoragePathBase()
         {
             var storagePath = mTask.GetParam("Storage_Path");
 
@@ -631,6 +631,7 @@ namespace CaptureTaskManager
         }
 
         private Dictionary<string, DateTime> LoadCachedLogMessages(FileSystemInfo messageCacheFile)
+        private static Dictionary<string, DateTime> LoadCachedLogMessages(FileInfo messageCacheFile)
         {
             var cachedMessages = new Dictionary<string, DateTime>();
 
@@ -728,7 +729,7 @@ namespace CaptureTaskManager
             return mgrSettings;
         }
 
-        private void LogErrorToDatabasePeriodically(string errorMessage, int logIntervalHours)
+        private static void LogErrorToDatabasePeriodically(string errorMessage, int logIntervalHours)
         {
             const string PERIODIC_LOG_FILE = "Periodic_ErrorMessages.txt";
 
@@ -1152,7 +1153,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Look for and remove old .tmp and .zip files
         /// </summary>
-        protected void RemoveOldTempFiles()
+        private static void RemoveOldTempFiles()
         {
             // Remove .tmp and .zip files over 12 hours old in the Windows Temp folder
             const int agedTempFilesHours = 12;
@@ -1160,7 +1161,7 @@ namespace CaptureTaskManager
             RemoveOldTempFiles(agedTempFilesHours, tempFolderPath);
         }
 
-        protected void RemoveOldTempFiles(int agedTempFilesHours, string tempFolderPath)
+        private static void RemoveOldTempFiles(int agedTempFilesHours, string tempFolderPath)
         {
             // This list tracks the file specs to search for in folder tempFolderPath
             var searchSpecs = new List<string>
@@ -1178,7 +1179,7 @@ namespace CaptureTaskManager
         /// <param name="agedTempFilesHours">Files more than this many hours old will be deleted</param>
         /// <param name="tempDirectoryPath">Path to the folder to look for and delete old files</param>
         /// <param name="searchSpecs">File specs to search for in folder tempDirectoryPath, e.g. "*.txt"</param>
-        protected void RemoveOldTempFiles(int agedTempFilesHours, string tempDirectoryPath, List<string> searchSpecs)
+        private static void RemoveOldTempFiles(int agedTempFilesHours, string tempDirectoryPath, List<string> searchSpecs)
         {
             try
             {
@@ -1469,9 +1470,9 @@ namespace CaptureTaskManager
         /// <summary>
         /// Validates that the dataset storage drive has sufficient free space
         /// </summary>
-        /// <param name="errMsg"></param>
+        /// <param name="errMsg">Output: error message</param>
         /// <returns>True if OK; false if not enough free space</returns>
-        protected bool ValidateFreeDiskSpace(out string errMsg)
+        private bool ValidateFreeDiskSpace(out string errMsg)
         {
             const int DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 30;
 

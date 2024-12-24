@@ -336,7 +336,7 @@ namespace CaptureTaskManager
 
         // Used by CTM plugins
         // ReSharper disable once UnusedMember.Global
-        protected void DeleteFileIgnoreErrors(string filePath)
+        protected static void DeleteFileIgnoreErrors(string filePath)
         {
             try
             {
@@ -361,7 +361,7 @@ namespace CaptureTaskManager
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <returns>True if success, false if an error</returns>
         // ReSharper disable once UnusedMember.Global
-        protected bool GetMyEMSLIngestStatus(
+        protected static bool GetMyEMSLIngestStatus(
             int job,
             MyEMSLStatusCheck statusChecker,
             string statusURI,
@@ -447,7 +447,7 @@ namespace CaptureTaskManager
         /// </remarks>
         /// <param name="datasetDirectory">Dataset directory (typically the .d directory)</param>
         /// <returns>True if the IMS files are found, otherwise false</returns>
-        protected bool IsAgilentIMSDataset(DirectoryInfo datasetDirectory)
+        protected static bool IsAgilentIMSDataset(DirectoryInfo datasetDirectory)
         {
             if (!datasetDirectory.Exists)
                 return false;
@@ -476,7 +476,7 @@ namespace CaptureTaskManager
             return foundFilePaths.Count == filesToFind.Count;
         }
 
-        private bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)
+        private static bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)
         {
             int waitTimeLogIntervalSeconds;
 
@@ -510,11 +510,11 @@ namespace CaptureTaskManager
         /// <summary>
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
-        /// <param name="dllFilePath"></param>
-        /// <param name="versionInfoFilePath"></param>
-        /// <param name="version"></param>
+        /// <param name="dllFilePath">DLL file path</param>
+        /// <param name="versionInfoFilePath">Version info file path</param>
+        /// <param name="version">Output: version</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
+        private static bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
         {
             // Open versionInfoFilePath and read the Version= line
 
@@ -827,7 +827,7 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
-        private bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
+        private static bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
             try
             {
