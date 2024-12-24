@@ -58,7 +58,7 @@ namespace CaptureTaskManager
 
         private readonly string mManagerName;
 
-        private readonly IStatusFile mStatusFile;
+        private readonly StatusFile mStatusFile;
 
         private readonly bool mTraceMode;
 
@@ -76,7 +76,7 @@ namespace CaptureTaskManager
             string mgrConfigDBConnectionString,
             string managerName,
             string workingDirPath,
-            IStatusFile statusFile,
+            StatusFile statusFile,
             bool traceMode)
         {
             if (string.IsNullOrEmpty(mgrConfigDBConnectionString))

@@ -59,7 +59,7 @@ namespace CaptureTaskManager
         private IToolRunner mCapTool;
         private bool mConfigChanged;
         private int mTaskRequestErrorCount;
-        private IStatusFile mStatusFile;
+        private StatusFile mStatusFile;
 
         private MessageSender mMessageSender;
 
@@ -1387,7 +1387,7 @@ namespace CaptureTaskManager
             return true;
         }
 
-        private void UpdateLogLevel(IMgrParams mgrSettings)
+        private void UpdateLogLevel(MgrSettings mgrSettings)
         {
             try
             {
