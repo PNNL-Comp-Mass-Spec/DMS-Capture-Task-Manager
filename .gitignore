@@ -14,3 +14,11 @@ DeployedFiles/*.lnk
 
 /DeployedFiles/net48/
 /DeployedFiles/net8.0-windows/
+/RefLib/MyEMSLReader.dll
+/RefLib/MyEMSLReader.xml
+/RefLib/Pacifica.dll
+/RefLib/Pacifica.xml
+/RefLib/PRISM.dll
+/RefLib/*/Pacifica.dll
+/RefLib/*/Pacifica.xml
+/RefLib/*/Pacifica.deps.json
