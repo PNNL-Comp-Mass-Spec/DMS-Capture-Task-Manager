@@ -1076,7 +1076,8 @@ namespace DatasetInfoPlugin
             string outputPathBase,
             string datasetFileOrDirectory,
             int totalDatasetFilesOrDirectories,
-            ICollection<string> outputDirectoryNames,
+            // ReSharper disable once SuggestBaseTypeForParameter
+            List<string> outputDirectoryNames,
             ref int nextSubdirectorySuffix)
         {
             string currentOutputDirectory;
@@ -1119,7 +1120,8 @@ namespace DatasetInfoPlugin
             return currentOutputDirectory;
         }
 
-        private bool CopyRemoteDirectoryToLocal(FileSystemInfo remoteDirectory, string localDirectoryPath, ToolReturnData returnData)
+        // ReSharper disable once SuggestBaseTypeForParameter
+        private bool CopyRemoteDirectoryToLocal(DirectoryInfo remoteDirectory, string localDirectoryPath, ToolReturnData returnData)
         {
             try
             {
@@ -1148,7 +1150,8 @@ namespace DatasetInfoPlugin
         private void FindDotDDirectories(
             DirectoryInfo datasetDirectory,
             string initialFileOrDirectoryName,
-            ICollection<string> fileOrDirectoryRelativePaths)
+            // ReSharper disable once SuggestBaseTypeForParameter
+            List<string> fileOrDirectoryRelativePaths)
         {
             var looseMatchDotD = mTaskParams.GetParam("LooseMatchDotD", false);
 
@@ -1501,9 +1504,12 @@ namespace DatasetInfoPlugin
             return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.exe");
         }
 
-            string currentOutputDirectory, ICollection<string> cachedDatasetInfoXML,
-            ICollection<FileInfo> datasetInfoFilesToRename)
         private static void LoadDatasetInfoXML(
+            string currentOutputDirectory,
+            // ReSharper disable SuggestBaseTypeForParameter
+            List<string> cachedDatasetInfoXML,
+            List<FileInfo> datasetInfoFilesToRename)
+            // ReSharper restore SuggestBaseTypeForParameter
         {
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);
 
