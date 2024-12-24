@@ -630,7 +630,7 @@ namespace CaptureTaskManager
             }
         }
 
-        private Dictionary<string, DateTime> LoadCachedLogMessages(FileSystemInfo messageCacheFile)
+        // ReSharper disable once SuggestBaseTypeForParameter
         private static Dictionary<string, DateTime> LoadCachedLogMessages(FileInfo messageCacheFile)
         {
             var cachedMessages = new Dictionary<string, DateTime>();
@@ -638,6 +638,7 @@ namespace CaptureTaskManager
             using var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
             var lineCount = 0;
+            var splitChar = new[] { '\t' };
 
             while (!reader.EndOfStream)
             {
@@ -650,7 +651,7 @@ namespace CaptureTaskManager
                     continue;
                 }
 
-                var lineParts = dataLine.Split(new[] { '\t' }, 2);
+                var lineParts = dataLine.Split(splitChar, 2);
 
                 var timeStampText = lineParts[0];
                 var message = lineParts[1];
