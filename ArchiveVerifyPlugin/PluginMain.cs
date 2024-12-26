@@ -634,7 +634,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="datasetInstrument"></param>
         /// <param name="datasetYearQuarter"></param>
         /// <returns>True if successful, false if an error</returns>
-        private bool CreateHashResultsFile(
+        private static bool CreateHashResultsFile(
             FileInfo hashResultsFile,
             IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
             string datasetInstrument,
@@ -732,7 +732,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        private void DeleteMetadataFile(string metadataFilePath)
+        private static void DeleteMetadataFile(string metadataFilePath)
         {
             try
             {
@@ -763,7 +763,7 @@ namespace ArchiveVerifyPlugin
         /// </summary>
         /// <param name="transactionIdStats">Dictionary where keys are transactionIds and values are the number of files that had the given transactionId</param>
         /// <returns>Transaction ID</returns>
-        private long GetBestTransactionId(Dictionary<long, int> transactionIdStats)
+        private static long GetBestTransactionId(Dictionary<long, int> transactionIdStats)
         {
             if (transactionIdStats.Count == 0)
             {
@@ -779,12 +779,12 @@ namespace ArchiveVerifyPlugin
             return bestTransactionId;
         }
 
-        private string GetHashResultsFilePath(string hashResultsFolderPath, string datasetName, string instrumentName, string datasetYearQuarter)
+        private static string GetHashResultsFilePath(string hashResultsFolderPath, string datasetName, string instrumentName, string datasetYearQuarter)
         {
             return GetHashResultsFilePath(Path.Combine(hashResultsFolderPath, instrumentName, datasetYearQuarter), datasetName);
         }
 
-        private string GetHashResultsFilePath(string parentFolderPath, string datasetName)
+        private static string GetHashResultsFilePath(string parentFolderPath, string datasetName)
         {
             return Path.Combine(parentFolderPath, HASH_RESULTS_FILE_PREFIX + datasetName);
         }
@@ -805,10 +805,10 @@ namespace ArchiveVerifyPlugin
         /// Parse out the hash and file path from dataLine
         /// Updates hashResults (or adds a new entry)
         /// </summary>
-        /// <param name="dataLine"></param>
+        /// <param name="dataLine">Data line</param>
         /// <param name="hashResults">Dictionary where keys are Linux file paths and values are HashInfo, tracking the Hash value and MyEMSL File ID</param>
         /// <returns>True if hashResults is updated, false if unchanged</returns>
-        private void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, HashInfo> hashResults)
+        private static void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, HashInfo> hashResults)
         {
             // Data Line Format
             //
@@ -878,7 +878,7 @@ namespace ArchiveVerifyPlugin
             hashResults.Add(archiveFilePath, hashInfo);
         }
 
-        private bool UpdateHashResultsFile(
+        private static bool UpdateHashResultsFile(
             string hashResultsFilePath,
             IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
             string datasetInstrument,
@@ -1025,7 +1025,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        private bool WriteHashResultsFile(Dictionary<string, HashInfo> hashResults, string hashResultsFilePath, bool useTempFile)
+        private static bool WriteHashResultsFile(Dictionary<string, HashInfo> hashResults, string hashResultsFilePath, bool useTempFile)
         {
             var currentStep = "initializing";
 

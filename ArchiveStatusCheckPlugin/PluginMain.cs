@@ -335,7 +335,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="statusNums"></param>
         /// <param name="statusData"></param>
         /// <returns>Number of steps that have been completed</returns>
-        private byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
+        private static byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
             byte ingestStepsCompleted = 0;
 
