@@ -178,7 +178,7 @@ namespace DatasetArchivePlugin
             return true;
         }
 
-        private void CreateArchiveUpdateJobsForDataset(IReadOnlyCollection<string> subdirectoryNames)
+        private void CreateArchiveUpdateJobsForDataset(List<string> subdirectoryNames)
         {
             var failureMsg = "Error creating archive update tasks for dataset " + mDatasetName + "; " +
                              "need to create ArchiveUpdate tasks for subdirectories " +
