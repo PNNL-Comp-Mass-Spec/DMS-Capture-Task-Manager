@@ -200,7 +200,7 @@ namespace ArchiveVerifyPlugin
                     mRetData, out _, out var currentTask, out var percentComplete);
 
                 // Examine the current task and percent complete to determine the number of ingest steps completed
-                ingestStepsCompleted = statusChecker.DetermineIngestStepsCompleted(currentTask, percentComplete, 0);
+                ingestStepsCompleted = MyEMSLStatusCheck.DetermineIngestStepsCompleted(currentTask, percentComplete, 0);
 
                 fatalError =
                     mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED &&

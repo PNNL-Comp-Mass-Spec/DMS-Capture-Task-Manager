@@ -224,7 +224,7 @@ namespace ArchiveStatusCheckPlugin
                         mJob, statusChecker, statusInfo.StatusURI,
                         mRetData, out _, out var currentTask, out var percentComplete);
 
-                    statusInfo.IngestStepsCompletedNew = statusChecker.DetermineIngestStepsCompleted(currentTask, percentComplete, statusInfo.IngestStepsCompletedOld);
+                    statusInfo.IngestStepsCompletedNew = MyEMSLStatusCheck.DetermineIngestStepsCompleted(currentTask, percentComplete, statusInfo.IngestStepsCompletedOld);
 
                     if (!ingestSuccess)
                     {
