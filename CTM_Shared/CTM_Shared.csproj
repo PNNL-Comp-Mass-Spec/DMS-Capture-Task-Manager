@@ -21,7 +21,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.118" />
+    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.131" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.112">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
