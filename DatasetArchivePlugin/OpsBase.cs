@@ -610,9 +610,9 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Return the text after the colon in statusMessage
         /// </summary>
-        /// <param name="statusMessage"></param>
+        /// <param name="statusMessage">Status message</param>
         /// <returns>Text if the colon was found, otherwise an empty string</returns>
-        private string GetFilenameFromStatus(string statusMessage)
+        private static string GetFilenameFromStatus(string statusMessage)
         {
             var colonIndex = statusMessage.IndexOf(':');
 
@@ -627,10 +627,10 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Perform several tasks after the MyEMSL Uploader raises an exception
         /// </summary>
-        /// <param name="ex"></param>
-        /// <param name="myEMSLUploader"></param>
-        /// <param name="startTime"></param>
-        /// <param name="useTestInstance"></param>
+        /// <param name="ex">Exception</param>
+        /// <param name="myEMSLUploader">Uploader instance</param>
+        /// <param name="startTime">Start time</param>
+        /// <param name="useTestInstance">When true, use the test instance</param>
         private void HandleUploadException(Exception ex, MyEMSLUploader myEMSLUploader, DateTime startTime, bool useTestInstance)
         {
             // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
@@ -707,7 +707,7 @@ namespace DatasetArchivePlugin
         /// </summary>
         /// <param name="dsNamePath">Fully qualified path to dataset folder</param>
         /// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
-        private bool VerifyDSPresent(string dsNamePath)
+        private static bool VerifyDSPresent(string dsNamePath)
         {
             return Directory.Exists(dsNamePath);
         }
