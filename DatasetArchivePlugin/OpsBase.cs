@@ -402,7 +402,10 @@ namespace DatasetArchivePlugin
                     OnStatusEvent(statusMessage);
                 }
 
-                // Start the upload
+                // Note: If the dataset directory has over 15 GB of data (including subdirectories), only the base directory and the QC directory will be pushed
+                // Other subdirectories need to be pushed with separate ArchiveUpdate tasks
+
+                // Start the upload: the uploader will compile a list of files to upload, then push them into MyEMSL
                 var success = myEMSLUploader.SetupMetadataAndUpload(config, debugMode, out var statusURL);
 
                 criticalErrorMessage = myEMSLUploader.CriticalErrorMessage;
@@ -508,7 +511,7 @@ namespace DatasetArchivePlugin
                     return true;
                 }
 
-                CreateArchiveUpdateJobsForDataset(myEMSLUploader.MetadataContainer.SkippedDatasetArchiveSubdirectories);
+                CreateArchiveUpdateJobsForDataset(skippedSubdirectories);
 
                 return true;
             }
