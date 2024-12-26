@@ -272,7 +272,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="verifiedURIs">Verified URIs</param>
         /// <param name="statusData">Status Info for each Status_Num</param>
         private void CompareUnverifiedAndVerifiedURIs(
-            IDictionary<int, string> unverifiedURIs,
+            Dictionary<int, string> unverifiedURIs,
             IReadOnlyDictionary<int, string> verifiedURIs,
             Dictionary<int, IngestStatusInfo> statusData)
         {
@@ -416,7 +416,8 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="sql"></param>
         /// <param name="statusData"></param>
         /// <param name="retryCount"></param>
-        private void GetStatusURIsAndSubdirectories(string sql, IDictionary<int, IngestStatusInfo> statusData, int retryCount = 2)
+        // ReSharper disable once SuggestBaseTypeForParameter
+        private void GetStatusURIsAndSubdirectories(string sql, Dictionary<int, IngestStatusInfo> statusData, int retryCount = 2)
         {
             // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");

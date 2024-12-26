@@ -421,7 +421,8 @@ namespace ArchiveVerifyPlugin
             out int matchCount,
             out int mismatchCount,
             IReadOnlyDictionary<string, string> filePathHashMap,
-            IDictionary<long, int> transactionIdStats)
+            // ReSharper disable once SuggestBaseTypeForParameter
+            Dictionary<long, int> transactionIdStats)
         {
             matchCount = 0;
             mismatchCount = 0;
@@ -498,7 +499,7 @@ namespace ArchiveVerifyPlugin
         private void CompareToMetadataFile(
             DMSMetadataObject metadataObject,
             IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> remoteFiles,
-            FileSystemInfo metadataFileInfo,
+            FileInfo metadataFileInfo,
             out int matchCount,
             out int mismatchCount,
             out long transactionId)
