@@ -832,6 +832,21 @@ namespace CaptureToolPlugin
                 return false;
             }
 
+            if (mIsLcDataCapture && datasetDirectory.IndexOf(Path.DirectorySeparatorChar) < 0)
+            {
+                // Processing an LCDatasetCapture task, but it does not have a dataset directory name of the form "DatasetName\LC"
+
+                returnData.CloseoutMsg = string.Format(
+                    "The Directory task parameter is invalid since it does not include a subdirectory; expecting \"{0}\\LC\" but actually \"{1}\"",
+                    datasetName, datasetDirectory);
+
+                LogError(returnData.CloseoutMsg);
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                datasetDirectoryPath = string.Empty;
+                return false;
+            }
+
             // Setup Destination directory based on client/server switch, mClientServer
             // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
             // False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
