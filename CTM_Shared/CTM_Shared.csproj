@@ -36,8 +36,8 @@
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot;" />
-    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetPath)&quot;                 &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
-    <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot;             &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
   </Target>
 </Project>
