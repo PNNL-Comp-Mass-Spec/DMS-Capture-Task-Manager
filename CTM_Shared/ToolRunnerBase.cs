@@ -913,12 +913,13 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath"></param>
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
         /// <returns>True if success; false if an error</returns>
-        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath,
-                                                         string versionInspectorExeName)
+        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath, string versionInspectorExeName)
         {
             try
             {
-                var versionInspectorAppPath = Path.Combine(CTMUtilities.GetAppDirectoryPath(), versionInspectorExeName);
+                // Typically C:\DMS_Programs\DLLVersionInspector
+                var versionInspectorDirectory = mMgrParams.GetParam("DLLVersionInspectorProgLoc", @"C:\DMS_Programs\DLLVersionInspector");
+                var versionInspectorAppPath = Path.Combine(versionInspectorDirectory, versionInspectorExeName);
 
                 var dllFile = new FileInfo(dllFilePath);
 
