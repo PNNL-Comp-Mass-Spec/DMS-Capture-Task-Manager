@@ -918,7 +918,14 @@ namespace CaptureTaskManager
             try
             {
                 // Typically C:\DMS_Programs\DLLVersionInspector
-                var versionInspectorDirectory = mMgrParams.GetParam("DLLVersionInspectorProgLoc", @"C:\DMS_Programs\DLLVersionInspector");
+                var versionInspectorDirectory = mMgrParams.GetParam("DLLVersionInspectorProgLoc", string.Empty);
+
+                if (string.IsNullOrWhiteSpace(versionInspectorDirectory))
+                {
+                    LogError("Manager parameter DLLVersionInspectorProgLoc is undefined");
+                    return false;
+                }
+
                 var versionInspectorAppPath = Path.Combine(versionInspectorDirectory, versionInspectorExeName);
 
                 var dllFile = new FileInfo(dllFilePath);
