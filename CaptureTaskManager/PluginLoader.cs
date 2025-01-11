@@ -170,9 +170,9 @@ namespace CaptureTaskManager
         /// <summary>
         /// Gets the path to the plugin info config file
         /// </summary>
-        /// <param name="PluginInfoFileName">Name of plugin info file</param>
+        /// <param name="pluginInfoFileName">Name of plugin info file</param>
         /// <returns>Path to plugin info file</returns>
-        private static string GetPluginInfoFilePath(string PluginInfoFileName)
+        private static string GetPluginInfoFilePath(string pluginInfoFileName)
         {
             var fi = new FileInfo(PRISM.AppUtils.GetAppPath());
 
@@ -181,7 +181,7 @@ namespace CaptureTaskManager
                 throw new DirectoryNotFoundException("Could not determine parent folder path for the exe");
             }
 
-            return Path.Combine(fi.DirectoryName, PluginInfoFileName);
+            return Path.Combine(fi.DirectoryName, pluginInfoFileName);
         }
 
         /// <summary>

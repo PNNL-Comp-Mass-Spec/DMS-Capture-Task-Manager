@@ -397,21 +397,21 @@ namespace DatasetQualityPlugin
             return true;
         }
 
-        private bool CopyFileToServer(string sFileName, string sSourceFolder, string sTargetFolder)
+        private bool CopyFileToServer(string fileName, string sourceFolder, string targetFolder)
         {
             try
             {
-                var sSourceFilePath = Path.Combine(sSourceFolder, sFileName);
+                var sourceFilePath = Path.Combine(sourceFolder, fileName);
 
-                if (File.Exists(sSourceFilePath))
+                if (File.Exists(sourceFilePath))
                 {
-                    var sTargetFilePath = Path.Combine(sTargetFolder, sFileName);
-                    mFileTools.CopyFile(sSourceFilePath, sTargetFilePath, true);
+                    var targetFilePath = Path.Combine(targetFolder, fileName);
+                    mFileTools.CopyFile(sourceFilePath, targetFilePath, true);
                 }
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutMsg = "Error copying file " + sFileName + " to Dataset folder";
+                mRetData.CloseoutMsg = "Error copying file " + fileName + " to Dataset folder";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
@@ -556,22 +556,23 @@ namespace DatasetQualityPlugin
         private string GetQuameterPath()
         {
             // Typically C:\DMS_Programs\Quameter\x64\
-            var sQuameterFolder = mMgrParams.GetParam("QuameterProgLoc", string.Empty);
+            var quameterDirectory = mMgrParams.GetParam("QuameterProgLoc", string.Empty);
 
-            if (string.IsNullOrEmpty(sQuameterFolder))
+            if (string.IsNullOrEmpty(quameterDirectory))
             {
+                LogError("Manager parameter QuameterProgLoc is undefined");
                 return string.Empty;
             }
 
-            return Path.Combine(sQuameterFolder, "Quameter.exe");
+            return Path.Combine(quameterDirectory, "Quameter.exe");
         }
 
         /// <summary>
         /// Extract the results from the Quameter results file
         /// </summary>
-        /// <param name="ResultsFilePath"></param>
+        /// <param name="resultsFilePath"></param>
         /// <returns>List of key=value pairs</returns>
-        private List<KeyValuePair<string, string>> LoadQuameterResults(string ResultsFilePath)
+        private List<KeyValuePair<string, string>> LoadQuameterResults(string resultsFilePath)
         {
             // The Quameter results file has two rows, a header row and a data row
             // Filename StartTimeStamp   XIC-WideFrac   XIC-FWHM-Q1   XIC-FWHM-Q2   XIC-FWHM-Q3   XIC-Height-Q2   etc.
@@ -580,19 +581,19 @@ namespace DatasetQualityPlugin
             // The measurements are returned via this list
             var results = new List<KeyValuePair<string, string>>();
 
-            if (!File.Exists(ResultsFilePath))
+            if (!File.Exists(resultsFilePath))
             {
                 mRetData.CloseoutMsg = "Quameter Results file not found";
-                LogWarning(mRetData.CloseoutMsg + ": " + ResultsFilePath);
+                LogWarning(mRetData.CloseoutMsg + ": " + resultsFilePath);
                 return results;
             }
 
             if (mDebugLevel >= 5)
             {
-                LogDebug("Parsing Quameter Results file " + ResultsFilePath);
+                LogDebug("Parsing Quameter Results file " + resultsFilePath);
             }
 
-            using var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            using var reader = new StreamReader(new FileStream(resultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
             string headerLine;
 
@@ -1188,13 +1189,13 @@ namespace DatasetQualityPlugin
         /// <summary>
         /// Read the Quameter results files, convert to XML, and post to DMS
         /// </summary>
-        /// <param name="ResultsFilePath">Path to the Quameter results file</param>
+        /// <param name="resultsFilePath">Path to the Quameter results file</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool ReadAndStoreQuameterResults(string ResultsFilePath)
+        private bool ReadAndStoreQuameterResults(string resultsFilePath)
         {
             try
             {
-                var results = LoadQuameterResults(ResultsFilePath);
+                var results = LoadQuameterResults(resultsFilePath);
 
                 if (results.Count == 0)
                 {
