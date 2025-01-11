@@ -95,7 +95,7 @@ namespace CaptureTaskManager
         Any = 0,
         Disk = 1,
         Print = 2,
-        Reserved = 8,
+        Reserved = 8
     }
 
     public enum ResourceDisplayType

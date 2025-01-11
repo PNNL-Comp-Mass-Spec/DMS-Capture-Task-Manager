@@ -739,7 +739,7 @@ namespace CaptureToolPlugin
                 InstrumentFileLayout.DirectoryNoExt => new DirectoryNoExtCapture(initData),
                 InstrumentFileLayout.BrukerImaging => new BrukerImagingCapture(initData),
                 InstrumentFileLayout.BrukerSpot => new BrukerSpotCapture(initData),
-                _ => new UnknownCapture(initData),
+                _ => new UnknownCapture(initData)
             };
 
             capture.Capture(out var msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);

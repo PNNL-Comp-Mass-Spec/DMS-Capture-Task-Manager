@@ -954,7 +954,7 @@ namespace ArchiveVerifyPlugin
                     IncludeAllRevisions = true,
                     ReportMetadataURLs = mTraceMode || mDebugLevel >= 5,
                     TraceMode = mTraceMode,
-                    UseTestInstance = false,
+                    UseTestInstance = false
                 };
 
                 RegisterEvents(reader);

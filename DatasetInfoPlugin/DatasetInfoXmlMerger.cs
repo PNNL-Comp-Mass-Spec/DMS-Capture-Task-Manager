@@ -405,7 +405,7 @@ namespace DatasetInfoPlugin
                 CheckCharacters = true,
                 Indent = true,
                 IndentChars = "  ",
-                Encoding = Encoding.UTF8,
+                Encoding = Encoding.UTF8
             };
 
             var memoryStream = new MemoryStream();
