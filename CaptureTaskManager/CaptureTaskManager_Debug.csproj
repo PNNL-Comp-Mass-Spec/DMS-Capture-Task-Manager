@@ -42,9 +42,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Apache.NMS.ActiveMQ" Version="2.1.0" />
+    <PackageReference Include="Apache.NMS.ActiveMQ" Version="2.1.1" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.112">
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.115">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
