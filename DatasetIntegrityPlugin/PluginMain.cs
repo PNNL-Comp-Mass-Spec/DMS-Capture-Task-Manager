@@ -217,9 +217,11 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectoryPath, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
+                case InstrumentClass.BrukerTOF_TDF:
                 case InstrumentClass.TimsTOF_MALDI_Imaging:
                     // Note: These can contain either analysis.tsf/.tsf_bin, or analysis.tdf/.tdf_bin, so we need to check both
                     mRetData.CloseoutType = TestBrukerTof_ImagingTsfDirectory(datasetDirectoryPath, instrumentName, instrumentClass);
+
                     if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED && mRetData.EvalMsg.EndsWith(".tsf file not found"))
                     {
                         // Cache/clear the last error message
@@ -242,10 +244,6 @@ namespace DatasetIntegrityPlugin
 
                 case InstrumentClass.BrukerTOF_BAF:
                     mRetData.CloseoutType = TestBrukerTof_BafDirectory(datasetDirectoryPath, instrumentName, instrumentClass);
-                    break;
-
-                case InstrumentClass.BrukerTOF_TDF:
-                    mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectoryPath, instrumentName, instrumentClass);
                     break;
 
                 case InstrumentClass.Sciex_QTrap:
@@ -1678,7 +1676,7 @@ namespace DatasetIntegrityPlugin
         /// Tests a BrukerTOF_TDF directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
-        /// <param name="instrumentName"></param>
+        /// <param name="instrumentName">Instrument name</param>
         /// <param name="requiredInstrumentFiles">Dictionary listing the required file(s); keys are filename and values are minimum size in KB</param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="requireMethodDirectory">When true, a subdirectory ending in .m must exist</param>
@@ -1690,7 +1688,7 @@ namespace DatasetIntegrityPlugin
             InstrumentClass instrumentClass,
             bool requireMethodDirectory = true)
         {
-            // Verify only one .d directory in the dataset
+            // Verify at least one .d directory in the dataset directory
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
             var dotDDirectories = datasetDirectory.GetDirectories("*.d").ToList();
 
