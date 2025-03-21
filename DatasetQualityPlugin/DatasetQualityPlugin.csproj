@@ -25,8 +25,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.6" />
-    <PackageReference Include="PRISM-Library" Version="2.9.5" />
+    <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.8" />
+    <PackageReference Include="PRISM-Library" Version="2.9.6" />
     <PackageReference Include="ThermoRawFileReader" Version="4.2.32" />
   </ItemGroup>
   <ItemGroup>
