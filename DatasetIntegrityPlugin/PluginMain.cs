@@ -617,9 +617,9 @@ namespace DatasetIntegrityPlugin
         /// will return True and optionally deletes the x_ directory
         /// </summary>
         /// <param name="directoryList">List of directories; must contain exactly 2 entries</param>
-        /// <param name="deleteIfSuperseded"></param>
+        /// <param name="deleteIfSuperseded">If true, delete the directory if superseded</param>
         /// <returns>True if this is a superseded directory and it is safe to delete</returns>
-        private bool DetectSupersededDirectory(IReadOnlyList<DirectoryInfo> directoryList, bool deleteIfSuperseded)
+        private static bool DetectSupersededDirectory(IReadOnlyList<DirectoryInfo> directoryList, bool deleteIfSuperseded)
         {
             try
             {
@@ -703,8 +703,8 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Convert a file size in kilobytes to a string form with units KB, MB or GB
         /// </summary>
-        /// <param name="fileSizeKB"></param>
-        private string FileSizeToString(float fileSizeKB)
+        /// <param name="fileSizeKB">File size, in KB</param>
+        private static string FileSizeToString(float fileSizeKB)
         {
             var fileSizeGB = fileSizeKB / 1024.0 / 1024.0;
             var fileSizeMB = fileSizeKB / 1024.0;
@@ -727,7 +727,7 @@ namespace DatasetIntegrityPlugin
         /// </summary>
         /// <param name="fileNamePath">Fully qualified path to input file</param>
         /// <returns>File size in KB</returns>
-        private float GetFileSize(string fileNamePath)
+        private static float GetFileSize(string fileNamePath)
         {
             var dataFile = new FileInfo(fileNamePath);
             return GetFileSize(dataFile);
@@ -738,7 +738,7 @@ namespace DatasetIntegrityPlugin
         /// </summary>
         /// <param name="dataFile">File info object</param>
         /// <returns>File size in KB</returns>
-        private float GetFileSize(FileInfo dataFile)
+        private static float GetFileSize(FileInfo dataFile)
         {
             if (dataFile == null)
                 return 0;
@@ -746,7 +746,7 @@ namespace DatasetIntegrityPlugin
             return dataFile.Length / 1024F;
         }
 
-        private float GetLargestFileSizeKB(IEnumerable<FileInfo> filesToCheck)
+        private static float GetLargestFileSizeKB(IEnumerable<FileInfo> filesToCheck)
         {
             var largestSizeKB = 0.0f;
 
@@ -962,7 +962,7 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool PositiveNegativeMethodDirectories(IReadOnlyList<DirectoryInfo> methodDirectories)
+        private static bool PositiveNegativeMethodDirectories(IReadOnlyList<DirectoryInfo> methodDirectories)
         {
             if (methodDirectories.Count != 2)
             {
@@ -2295,7 +2295,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="gzipFilePath">File to verify</param>
         /// <param name="errorMessage">Error message (output)</param>
         /// <returns>True if valid, false if an error</returns>
-        private bool TestGzipFile(string gzipFilePath, out string errorMessage)
+        private static bool TestGzipFile(string gzipFilePath, out string errorMessage)
         {
             const int BYTES_PER_READ = 81920;
             long bytesRead = 0;
@@ -2682,7 +2682,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="uimfFilePath">UIMF File to open</param>
         /// <param name="uimfStatusMessage">Output: status message</param>
         /// <returns>True if the file can be opened and has valid spectra, otherwise false</returns>
-        private bool UimfFileHasData(string uimfFilePath, out string uimfStatusMessage)
+        private static bool UimfFileHasData(string uimfFilePath, out string uimfStatusMessage)
         {
             try
             {
