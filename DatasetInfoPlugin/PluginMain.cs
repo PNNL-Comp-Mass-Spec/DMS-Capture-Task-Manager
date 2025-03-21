@@ -502,7 +502,14 @@ namespace DatasetInfoPlugin
 
                 if (mMsFileScannerOptions.CheckCentroidingStatus)
                 {
+                    // Create files _ScanStats.txt and _ScanStatsEx.txt
                     argumentList.Add("/SS");
+
+                    if (IsLcDataCapture)
+                    {
+                        // Do not create empty scan stats files when processing LC .raw files
+                        argumentList.Add("/CreateEmptySS:False");
+                    }
                 }
 
                 if (mMsFileScannerOptions.ComputeOverallQualityScores)
