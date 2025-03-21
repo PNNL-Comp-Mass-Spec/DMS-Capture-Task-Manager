@@ -532,7 +532,8 @@ namespace DatasetIntegrityPlugin
             return CopyFileToDatasetDirectory(fileTools, cdfFile, datasetDirectoryPath);
         }
 
-        private bool CopyFileToDatasetDirectory(FileTools fileTools, FileSystemInfo dataFile, string datasetDirectoryPath)
+        // ReSharper disable once SuggestBaseTypeForParameter
+        private bool CopyFileToDatasetDirectory(FileTools fileTools, FileInfo dataFile, string datasetDirectoryPath)
         {
             if (mDebugLevel >= 4)
             {
@@ -768,7 +769,8 @@ namespace DatasetIntegrityPlugin
             return Path.Combine(exeName, "openchrom.exe");
         }
 
-        private string LookupBrukerMethodParamValue(FileSystemInfo methodFile, string paramName)
+        // ReSharper disable once SuggestBaseTypeForParameter
+        private static string LookupBrukerMethodParamValue(FileInfo methodFile, string paramName)
         {
             try
             {
