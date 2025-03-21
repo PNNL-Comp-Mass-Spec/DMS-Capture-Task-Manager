@@ -325,7 +325,7 @@ namespace DatasetInfoPlugin
                 System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) &&
                 !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase);
 
-            // Call the MS File Info Scanner DLL
+            // Call the MS File Info Scanner .exe
             // Typically only call it once, but for Bruker datasets with multiple .d directories, we'll call it once for each .d directory
 
             mMsg = string.Empty;

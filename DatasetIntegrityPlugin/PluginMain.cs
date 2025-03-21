@@ -927,8 +927,8 @@ namespace DatasetIntegrityPlugin
         /// If directoryList contains exactly two directories, calls DetectSupersededDirectory and deletes the extra x_ directory (if appropriate)
         /// Returns True if directoryList contains just one directory, or if able to successfully delete the extra x_ directory
         /// </summary>
-        /// <param name="directoryList"></param>
-        /// <param name="directoryDescription"></param>
+        /// <param name="directoryList">List of directories</param>
+        /// <param name="directoryDescription">Directory description</param>
         /// <returns>True if success; false if a problem</returns>
         private bool PossiblyRenameSupersededDirectory(IReadOnlyList<DirectoryInfo> directoryList, string directoryDescription)
         {
@@ -975,6 +975,7 @@ namespace DatasetIntegrityPlugin
                 return true;
             }
 
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (methodDirectories[1].Name.IndexOf("_neg", 0, StringComparison.OrdinalIgnoreCase) >= 0 &&
                 methodDirectories[0].Name.IndexOf("_pos", 0, StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -1745,7 +1746,6 @@ namespace DatasetIntegrityPlugin
                             LogError(mRetData.EvalMsg);
                             return EnumCloseOutType.CLOSEOUT_FAILED;
                         }
-
                     }
                 }
                 else if (!PossiblyRenameSupersededDirectory(dotDDirectories, InstrumentClassInfo.DOT_D_EXTENSION))
