@@ -534,10 +534,17 @@
             When true, create the dataset info XML file
             </summary>
         </member>
-        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateScanStatsFile">
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateScanStatsFiles">
             <summary>
             When true, create scan stats files
             </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateEmptyScanStatsFiles">
+            <summary>
+            When true, if the input file does not have any spectra (scans), create scan stats files that only have a header row
+            </summary>
+            <remarks>Ignored if <see cref="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateScanStatsFiles"/> is false
+            </remarks>
         </member>
         <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ComputeOverallQualityScores">
             <summary>
