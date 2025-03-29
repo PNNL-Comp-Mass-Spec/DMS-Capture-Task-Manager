@@ -28,7 +28,7 @@
     <PackageReference Include="PRISM-Library" Version="2.9.6" />
     <PackageReference Include="PRISMWin-Library" Version="1.1.22" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
-    <PackageReference Include="ThermoRawFileReader" Version="4.2.32" />
+    <PackageReference Include="ThermoRawFileReader" Version="4.2.48" />
     <PackageReference Include="UIMFLibrary" Version="3.8.29" />
   </ItemGroup>
   <ItemGroup>
