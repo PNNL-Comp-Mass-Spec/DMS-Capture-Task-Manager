@@ -1377,7 +1377,7 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="directoryPath">Directory path</param>
         /// <returns>String describing the directory; if a problem, reports Error: ErrorMsg </returns>
-        private string ReportDirectoryStats(string directoryPath)
+        private static string ReportDirectoryStats(string directoryPath)
         {
             try
             {
@@ -1417,7 +1417,7 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="directoryPath">Directory path to test</param>
         /// <returns>True if directory was found, otherwise false</returns>
-        private bool ValidateDirectoryPath(string directoryPath)
+        private static bool ValidateDirectoryPath(string directoryPath)
         {
             return Directory.Exists(directoryPath);
         }
@@ -1430,7 +1430,7 @@ namespace CaptureToolPlugin
         /// <param name="exampleRootPath">Example root path</param>
         /// <param name="returnData">Tool return data</param>
         /// <returns>True if valid, otherwise false</returns>
-        private bool ValidateStoragePath(string storagePathRoot, string rootPathDescription, string exampleRootPath, ToolReturnData returnData)
+        private static bool ValidateStoragePath(string storagePathRoot, string rootPathDescription, string exampleRootPath, ToolReturnData returnData)
         {
             if (!string.IsNullOrWhiteSpace(storagePathRoot) && !storagePathRoot.Equals("\\") && !storagePathRoot.Equals(" /"))
             {
