@@ -79,7 +79,7 @@ namespace CaptureToolPlugin
         /// <param name="password">Password</param>
         /// <param name="directorySharePath">Share path</param>
         /// <param name="closeoutType">Closeout code (output)</param>
-        /// <param name="evalCode"></param>
+        /// <param name="evalCode">Evaluation code</param>
         /// <returns>True if success, false if an error</returns>
         public bool ConnectToShare(
             string userName,
@@ -113,7 +113,7 @@ namespace CaptureToolPlugin
         /// <param name="shareDirectoryPath">Share path</param>
         /// <param name="myConn">Connection object (output)</param>
         /// <param name="closeoutType">Closeout code (output)</param>
-        /// <param name="evalCode"></param>
+        /// <param name="evalCode">Evaluation code</param>
         /// <returns>True if success, false if an error</returns>
         private bool ConnectToShare(
             string userName,
@@ -180,7 +180,7 @@ namespace CaptureToolPlugin
         /// <param name="directorySharePath">Remote share path</param>
         /// <param name="myConn">Connection object (output)</param>
         /// <param name="closeoutType">Closeout code (output)</param>
-        /// <param name="evalCode"></param>
+        /// <param name="evalCode">Evaluation code</param>
         /// <returns>True if success, false if an error</returns>
         private bool ConnectToShare(
             string userName,

@@ -26,8 +26,8 @@ namespace CaptureToolPlugin
         /// Copies this file to the dataset directory
         /// </summary>
         /// <remarks>Returns true if the .lcmethod file is not found</remarks>
-        /// <param name="datasetName"></param>
-        /// <param name="datasetDirectoryPath"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetDirectoryPath">Dataset directory path</param>
         /// <returns>True if file found and copied; false if an error; actually only returns false if a matching file was found but the copy failed.</returns>
         public bool CaptureLCMethodFile(string datasetName, string datasetDirectoryPath)
         {
@@ -39,9 +39,9 @@ namespace CaptureToolPlugin
         /// Copies this file to the dataset directory
         /// </summary>
         /// <remarks>Returns true if the .lcmethod file is not found</remarks>
-        /// <param name="datasetName"></param>
-        /// <param name="datasetDirectoryPath"></param>
-        /// <param name="fileCopied">returns true if a file was found and copied</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetDirectoryPath">Dataset directory path</param>
+        /// <param name="fileCopied">Output: true if a file was found and copied</param>
         /// <returns>True if file found and copied; false if an error; actually only returns false if a matching file was found but the copy failed.</returns>
         public bool CaptureLCMethodFile(string datasetName, string datasetDirectoryPath, out bool fileCopied)
         {
@@ -239,7 +239,7 @@ namespace CaptureToolPlugin
         /// Note that in February 2012 we plan to switch to saving .lcmethod files in Year_Quarter directories (e.g. 2012_1 or 2012_2)
         /// and thus we won't need to call this function in the future
         /// </summary>
-        /// <param name="lcMethodsDirectoryPath"></param>
+        /// <param name="lcMethodsDirectoryPath">LC methods directory path</param>
         private void DeleteOldLCMethodDirectories(string lcMethodsDirectoryPath)
         {
             try
@@ -293,7 +293,7 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Return the current quarter for a given date (based on the month)
         /// </summary>
-        /// <param name="date"></param>
+        /// <param name="date">Date</param>
         /// <returns>Quarter of the year</returns>
         private int GetQuarter(DateTime date)
         {

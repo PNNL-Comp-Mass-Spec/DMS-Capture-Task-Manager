@@ -230,7 +230,7 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Renames files and subdirectories in pendingRenames to start with x_
         /// </summary>
-        /// <param name="datasetDirectoryPath"></param>
+        /// <param name="datasetDirectoryPath">Dataset directory path</param>
         /// <param name="pendingRenames">Files and/or directories to rename</param>
         /// <returns>True if successful, false if an error</returns>
         private bool MarkSupersededFiles(string datasetDirectoryPath, IReadOnlyDictionary<FileSystemInfo, string> pendingRenames)
@@ -390,7 +390,7 @@ namespace CaptureToolPlugin
         /// </param>
         /// <param name="maxNonInstrumentDirCountToAllowResume">
         /// Maximum number of non-instrument subdirectories that can exist in the dataset directory if we are going to allow CopyWithResume to be used</param>
-        /// <param name="returnData">Return data</param>
+        /// <param name="returnData">Tool return data</param>
         /// <param name="pendingRenames">Files and/or directories to rename</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
         private bool PerformDSExistsActions(
@@ -1230,11 +1230,11 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Get the source directory and capture subdirectory, with handling for LCDataCapture vs. original dataset capture share redirection
         /// </summary>
-        /// <param name="taskParams"></param>
-        /// <param name="returnData"></param>
-        /// <param name="captureSubdirectory"></param>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <returns></returns>
+        /// <param name="taskParams">Task parameters</param>
+        /// <param name="returnData">Tool return data</param>
+        /// <param name="captureSubdirectory">Output: capture subdirectory name</param>
+        /// <param name="sourceDirectoryPath">Output: source directory path</param>
+        /// <returns>True if successful, false if a connection error</returns>
         private bool GetCapturePaths(ITaskParams taskParams, ToolReturnData returnData, out string captureSubdirectory, out string sourceDirectoryPath)
         {
             // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
@@ -1275,11 +1275,11 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Get the source directory path, and connect to the bionet share (if needed)
         /// </summary>
-        /// <param name="taskParams"></param>
-        /// <param name="returnData"></param>
-        /// <param name="captureSubdirectory"></param>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <returns></returns>
+        /// <param name="taskParams">Task parameters</param>
+        /// <param name="returnData">Tool return data</param>
+        /// <param name="captureSubdirectory">Output: capture subdirectory name</param>
+        /// <param name="sourceDirectoryPath">Output: source directory path</param>
+        /// <returns>True if successful, false if a connection error</returns>
         private bool GetSourceDirectoryPath(ITaskParams taskParams, ToolReturnData returnData, ref string captureSubdirectory, out string sourceDirectoryPath)
         {
             var sourceVol = taskParams.GetParam("Source_Vol").Trim();                       // Example: \\exact04.bionet\
@@ -1337,7 +1337,7 @@ namespace CaptureToolPlugin
         /// <param name="fileOrPath">Filename or full file/directory path</param>
         /// <param name="itemDescription">Description of fileOrPath; included in CloseoutMsg if there is a problem</param>
         /// <param name="isFile">True for a file; false for a path</param>
-        /// <param name="returnData">Return data object</param>
+        /// <param name="returnData">Tool return data</param>
         /// <returns>True if an error; false if no problems</returns>
         private static bool NameHasInvalidCharacter(string fileOrPath, string itemDescription, bool isFile, ToolReturnData returnData)
         {
@@ -1358,7 +1358,7 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Store mToolState.ErrorMessage in returnData.CloseoutMsg if an error exists yet returnData.CloseoutMsg is empty
         /// </summary>
-        /// <param name="returnData"></param>
+        /// <param name="returnData">Tool return data</param>
         private void PossiblyStoreErrorMessage(ToolReturnData returnData)
         {
             if (!string.IsNullOrWhiteSpace(mToolState.ErrorMessage) && string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
@@ -1375,7 +1375,7 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Report some stats on the given directory, including the number of files and the largest file
         /// </summary>
-        /// <param name="directoryPath"></param>
+        /// <param name="directoryPath">Directory path</param>
         /// <returns>String describing the directory; if a problem, reports Error: ErrorMsg </returns>
         private string ReportDirectoryStats(string directoryPath)
         {
@@ -1425,10 +1425,10 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Validates that the specified storage path is not an empty string or \ or /
         /// </summary>
-        /// <param name="storagePathRoot"></param>
-        /// <param name="rootPathDescription"></param>
-        /// <param name="exampleRootPath"></param>
-        /// <param name="returnData"></param>
+        /// <param name="storagePathRoot">Storage path root</param>
+        /// <param name="rootPathDescription">Root path description</param>
+        /// <param name="exampleRootPath">Example root path</param>
+        /// <param name="returnData">Tool return data</param>
         /// <returns>True if valid, otherwise false</returns>
         private bool ValidateStoragePath(string storagePathRoot, string rootPathDescription, string exampleRootPath, ToolReturnData returnData)
         {
@@ -1449,10 +1449,10 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Verifies that the storage path starts with the instrument name and has two or more directories
         /// </summary>
-        /// <param name="instrumentName"></param>
-        /// <param name="storagePath"></param>
-        /// <param name="storagePathParts"></param>
-        /// <param name="returnData"></param>
+        /// <param name="instrumentName">Instrument name</param>
+        /// <param name="storagePath">Storage path</param>
+        /// <param name="storagePathParts">Storage path parts</param>
+        /// <param name="returnData">Tool return data</param>
         /// <returns>True if valid, otherwise false</returns>
         private bool ValidateStoragePathInstrument(
             string instrumentName,
@@ -1491,11 +1491,11 @@ namespace CaptureToolPlugin
         /// This method will update datasetInfo.DatasetType if it is MultiFile and we matched two files, where one of the files is a .sld file.
         /// It will also remove the .sld file from datasetInfo.FileList
         /// </remarks>
-        /// <param name="dataset"></param>
-        /// <param name="sourceDirectoryPath"></param>
+        /// <param name="dataset">Dataset</param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="datasetInfo">Dataset info</param>
-        /// <param name="returnData"></param>
+        /// <param name="returnData">Tool return data</param>
         /// <returns>True if the file or directory is appropriate for the instrument class, otherwise false</returns>
         private bool ValidateWithInstrumentClass(
             string dataset,

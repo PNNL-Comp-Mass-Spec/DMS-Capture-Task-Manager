@@ -347,10 +347,10 @@ namespace CaptureToolPlugin.DataCapture
         /// <summary>
         /// Look for an incomplete Agilent Ion Trap .D directory
         /// </summary>
-        /// <param name="taskParams"></param>
-        /// <param name="directoryPath"></param>
-        /// <param name="msg"></param>
-        /// <param name="returnData"></param>
+        /// <param name="taskParams">Task parameters</param>
+        /// <param name="directoryPath">Directory path</param>
+        /// <param name="msg">Output: message</param>
+        /// <param name="returnData">Tool return data</param>
         /// <returns>True if incomplete</returns>
         private bool IsIncompleteAgilentIonTrap(
             ITaskParams taskParams,

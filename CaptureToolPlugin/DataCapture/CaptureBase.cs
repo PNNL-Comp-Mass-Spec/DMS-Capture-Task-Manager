@@ -229,8 +229,8 @@ namespace CaptureToolPlugin.DataCapture
         /// <summary>
         /// Wait the specified number of seconds, showing a status message every 5 seconds
         /// </summary>
-        /// <param name="sleepIntervalSeconds"></param>
-        /// <param name="fileOrDirectoryName"></param>
+        /// <param name="sleepIntervalSeconds">Sleep interval, ion seconds</param>
+        /// <param name="fileOrDirectoryName">File or directory name</param>
         protected void VerifyConstantSizeSleep(int sleepIntervalSeconds, string fileOrDirectoryName)
         {
             const int STATUS_MESSAGE_INTERVAL = 5;
@@ -302,7 +302,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <summary>
         /// Return the appropriate interval to wait while examining that a file's size does not change
         /// </summary>
-        /// <param name="sourceFilePath"></param>
+        /// <param name="sourceFilePath">Source file path</param>
         /// <returns>Sleep time, in seconds</returns>
         protected int GetSleepIntervalForFile(string sourceFilePath)
         {
@@ -331,7 +331,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <summary>
         /// Return the appropriate interval to wait while examining that a directory's size does not change
         /// </summary>
-        /// <param name="targetDirectory"></param>
+        /// <param name="targetDirectory">Target directory</param>
         /// <returns>Sleep time, in seconds</returns>
         protected int GetSleepIntervalForDirectory(DirectoryInfo targetDirectory)
         {
