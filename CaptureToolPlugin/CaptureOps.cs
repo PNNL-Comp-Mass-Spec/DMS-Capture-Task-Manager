@@ -664,6 +664,7 @@ namespace CaptureToolPlugin
                 case InstrumentClass.BrukerFT_BAF:
                 case InstrumentClass.BrukerMALDI_Imaging:
                 case InstrumentClass.BrukerMALDI_Imaging_V2:
+                case InstrumentClass.TimsTOF_MALDI_Imaging:
                     copyWithResume = true;
                     break;
 
@@ -999,7 +1000,7 @@ namespace CaptureToolPlugin
             int maxInstrumentDirCountToAllowResume;
             int maxNonInstrumentDirCountToAllowResume;
 
-            if (instrumentClass is InstrumentClass.BrukerMALDI_Imaging or InstrumentClass.BrukerMALDI_Imaging_V2)
+            if (instrumentClass is InstrumentClass.BrukerMALDI_Imaging or InstrumentClass.BrukerMALDI_Imaging_V2 or InstrumentClass.TimsTOF_MALDI_Imaging)
             {
                 maxFileCountToAllowResume = 20;
                 maxInstrumentDirCountToAllowResume = 20;
