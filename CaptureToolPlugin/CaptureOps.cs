@@ -431,21 +431,50 @@ namespace CaptureToolPlugin
 
                             var tooManyFilesOrDirectories = false;
                             var directoryCount = maxInstrumentDirCountToAllowResume + maxNonInstrumentDirCountToAllowResume;
+                            string countExceededReason;
 
                             if (maxFileCountToAllowResume > 0 || maxInstrumentDirCountToAllowResume + maxNonInstrumentDirCountToAllowResume > 0)
                             {
-                                if (fileCount > maxFileCountToAllowResume ||
-                                    instrumentDataDirCount > maxInstrumentDirCountToAllowResume ||
-                                    nonInstrumentDataDirCount > maxNonInstrumentDirCountToAllowResume)
+                                if (fileCount > maxFileCountToAllowResume)
                                 {
                                     tooManyFilesOrDirectories = true;
+                                    countExceededReason = string.Format("Too many files: {0} vs. maxFileCountToAllowResume={1}",
+                                        fileCount, maxFileCountToAllowResume);
+                                }
+                                else if (instrumentDataDirCount > maxInstrumentDirCountToAllowResume)
+                                {
+                                    tooManyFilesOrDirectories = true;
+                                    countExceededReason = string.Format(
+                                        "Too many instrument directories: {0} vs. maxInstrumentDirCountToAllowResume={1}",
+                                        instrumentDataDirCount, maxInstrumentDirCountToAllowResume);
+                                }
+                                else if (nonInstrumentDataDirCount > maxNonInstrumentDirCountToAllowResume)
+                                {
+                                    tooManyFilesOrDirectories = true;
+                                    countExceededReason = string.Format(
+                                        "Too many non-instrument directories: {0} vs. maxNonInstrumentDirCountToAllowResume={1}",
+                                        nonInstrumentDataDirCount, maxNonInstrumentDirCountToAllowResume);
+                                }
+                                else
+                                {
+                                    countExceededReason = string.Empty;
                                 }
                             }
                             else
                             {
-                                if (directoryCount == 0 && fileCount > 2 || fileCount == 0 && directoryCount > 1)
+                                if (directoryCount == 0 && fileCount > 2)
                                 {
                                     tooManyFilesOrDirectories = true;
+                                    countExceededReason = string.Format("Too many files: {0} is greater than 2 (directoryCount=0)", fileCount);
+                                }
+                                else if (fileCount == 0 && directoryCount > 1)
+                                {
+                                    tooManyFilesOrDirectories = true;
+                                    countExceededReason = string.Format("Too many directories: {0} is greater than 1 (fileCount=0)", directoryCount);
+                                }
+                                else
+                                {
+                                    countExceededReason = string.Empty;
                                 }
                             }
 
@@ -461,19 +490,20 @@ namespace CaptureToolPlugin
                                     switchResult = FindSupersededFiles(datasetDirectoryPath, pendingRenames);
                                 }
                             }
+                            else if (directoryCount == 0 && copyWithResume)
+                            {
+                                // Do not rename the files; leave as-is and we'll resume the copy
+                                switchResult = true;
+                            }
                             else
                             {
-                                if (directoryCount == 0 && copyWithResume)
-                                {
-                                    // Do not rename the files; leave as-is and we'll resume the copy
-                                    switchResult = true;
-                                }
-                                else
-                                {
-                                    // Fail the capture task
-                                    returnData.CloseoutMsg = "Dataset directory already exists and has multiple files or subdirectories";
-                                    LogError(returnData.CloseoutMsg + ": " + datasetDirectoryPath, true);
-                                }
+                                // Fail the capture task
+                                returnData.CloseoutMsg = "Dataset directory already exists and has multiple files or subdirectories";
+                                LogError(string.Format(
+                                    "{0} ({1}): {2}",
+                                    returnData.CloseoutMsg,
+                                    countExceededReason,
+                                    datasetDirectoryPath), true);
                             }
 
                             break;
