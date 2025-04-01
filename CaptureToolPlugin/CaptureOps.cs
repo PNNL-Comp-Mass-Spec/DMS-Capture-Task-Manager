@@ -1002,7 +1002,7 @@ namespace CaptureToolPlugin
 
             if (instrumentClass is InstrumentClass.BrukerMALDI_Imaging or InstrumentClass.BrukerMALDI_Imaging_V2 or InstrumentClass.TimsTOF_MALDI_Imaging)
             {
-                maxFileCountToAllowResume = 20;
+                maxFileCountToAllowResume = 40;
                 maxInstrumentDirCountToAllowResume = 20;
                 maxNonInstrumentDirCountToAllowResume = 1;
             }
