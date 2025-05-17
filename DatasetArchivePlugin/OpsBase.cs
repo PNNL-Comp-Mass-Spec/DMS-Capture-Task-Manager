@@ -186,7 +186,7 @@ namespace DatasetArchivePlugin
 
             try
             {
-                // Setup for execution of the stored procedure
+                // Setup for calling the procedure
                 var dbTools = mCaptureDbProcedureExecutor;
 
                 var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
@@ -239,8 +239,8 @@ namespace DatasetArchivePlugin
                         var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                         LogTools.LogWarning(
-                            "Unable to create archive update job for {0}; stored procedure returned resultCode {1}; message: {2}",
-                            datasetAndDirectory, returnParam.Value.CastDBVal<string>(), message);
+                            "Unable to create archive update job for {0}; procedure {1} returned resultCode {2}; message: {3}",
+                            datasetAndDirectory, cmd.CommandText, returnParam.Value.CastDBVal<string>(), message);
                     }
                 }
 
@@ -539,12 +539,15 @@ namespace DatasetArchivePlugin
                 mErrMsg = errorMessage;
                 OnErrorEvent(errorMessage, ex);
 
+                var jobNumber = mTaskParams.GetParam("Job", 0);
+
                 if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
                 {
-                    mErrMsg += "; operator not defined in EUS. " +
-                                "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
-                                "then wait for T_EUS_Users to update, " +
-                                "then update job parameters using SP update_parameters_for_task";
+                    mErrMsg += string.Format("; operator not defined in EUS. " +
+                                             "Have {0} login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
+                                             "then wait for T_EUS_Users to update, " +
+                                             "then update job parameters using " +
+                                             "Call cap.update_parameters_for_task(_jobList => '{1}');", operatorUsername, jobNumber);
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
@@ -553,8 +556,6 @@ namespace DatasetArchivePlugin
                 else if (ex.Message.Contains(DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE))
                 {
                     mErrMsg += ": " + DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE;
-
-                    var jobNumber = mTaskParams.GetParam("Job", 0);
 
                     mErrMsg += string.Format(
                         " ; to ignore this error, use Call cap.add_update_task_parameter ({0}, 'StepParameters', 'IgnoreMaxFileLimit', '1');", jobNumber);

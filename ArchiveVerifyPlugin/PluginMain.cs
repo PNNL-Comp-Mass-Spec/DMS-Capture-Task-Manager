@@ -133,7 +133,7 @@ namespace ArchiveVerifyPlugin
                 LogMessage("MyEMSL verification successful for job " + mJob + ", dataset " + mDataset);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-                // Note that stored procedure set_ctm_step_task_complete will update MyEMSL State values if mRetData.EvalCode = 5
+                // Note that procedure cap.set_ctm_step_task_complete will update MyEMSL State values if mRetData.EvalCode = 5
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_VERIFIED_IN_MYEMSL;
             }
             else

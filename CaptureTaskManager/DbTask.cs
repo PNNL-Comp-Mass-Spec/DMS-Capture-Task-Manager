@@ -56,7 +56,7 @@ namespace CaptureTaskManager
         protected readonly Dictionary<string, string> mJobParams = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// Stored procedure executor
+        /// Procedure calling mechanism
         /// </summary>
         protected readonly IDBTools mCaptureTaskDBProcedureExecutor;
 
@@ -138,7 +138,7 @@ namespace CaptureTaskManager
         public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg);
 
         /// <summary>
-        /// Debugging routine for printing SP calling params
+        /// Debugging routine for showing values passed to the procedure parameters
         /// </summary>
         /// <param name="cmd">SQL command object containing params</param>
         protected virtual void PrintCommandParams(DbCommand cmd)

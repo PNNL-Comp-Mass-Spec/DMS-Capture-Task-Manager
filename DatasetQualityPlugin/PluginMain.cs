@@ -942,7 +942,7 @@ namespace DatasetQualityPlugin
                     xmlResultsClean = xmlResults;
                 }
 
-                // Call stored procedure store_quameter_results in the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
+                // Call procedure store_quameter_results in the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
@@ -1454,9 +1454,9 @@ namespace DatasetQualityPlugin
         /// Examine the data line with the RegEx matcher
         /// If a match, compute the new progress
         /// </summary>
-        /// <param name="dataLine"></param>
-        /// <param name="progressMatcher"></param>
-        /// <param name="percentComplete"></param>
+        /// <param name="dataLine">Data line</param>
+        /// <param name="progressMatcher">Progress matcher</param>
+        /// <param name="percentComplete">Percent complete</param>
         /// <returns>True if progress was updated, false if the data line is not in the expected form</returns>
         private static bool UpdateProgress(string dataLine, Regex progressMatcher, ref float percentComplete)
         {

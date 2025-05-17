@@ -296,7 +296,7 @@ namespace CaptureTaskManager
                     var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                     // The return code was not an empty string, which indicates an error
-                    LogError("CaptureTask.RequestTaskDetailed(), SP execution has return code {0}; Message text: {1}",
+                    LogError("CaptureTask.RequestTaskDetailed(), procedure call has return code {0}; Message text: {1}",
                         returnCodeParam.Value.CastDBVal<string>(),
                         message);
 
@@ -306,7 +306,7 @@ namespace CaptureTaskManager
                 switch (resCode)
                 {
                     case RET_VAL_OK:
-                        // No errors found in SP call, so see if any step tasks were found
+                        // No errors found in the procedure call, so see if any step tasks were found
 
                         // Step task was found; get the data for it
                         var paramSuccess = FillParamDictionary(results);
@@ -333,7 +333,7 @@ namespace CaptureTaskManager
                         break;
 
                     default:
-                        // There was an SP error
+                        // Error calling the procedure
                         var outputMessage = messageParam.Value.CastDBVal<string>();
                         var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
@@ -404,12 +404,12 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Call stored procedure report_capture_task_manager_idle to make sure that
-        /// the database didn't actually assign a task job to this manager
+        /// Call procedure cap.report_capture_task_manager_idle to make sure
+        /// that the database didn't actually assign a capture task job to this manager
         /// </summary>
         private void ReportManagerIdle()
         {
-            // Setup for execution of the stored procedure
+            // Setup for calling the procedure
             var dbTools = mCaptureTaskDBProcedureExecutor;
             var cmd = dbTools.CreateCommand(SP_NAME_REPORT_IDLE, CommandType.StoredProcedure);
 
@@ -449,7 +449,7 @@ namespace CaptureTaskManager
         {
             try
             {
-                // Setup for execution of the stored procedure
+                // Setup for calling the procedure
                 var dbTools = mCaptureTaskDBProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);
 

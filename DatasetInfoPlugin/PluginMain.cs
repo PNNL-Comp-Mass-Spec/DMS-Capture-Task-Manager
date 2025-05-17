@@ -37,6 +37,12 @@ namespace DatasetInfoPlugin
 
         private const int MAX_INFO_SCANNER_RUNTIME_MINUTES = 60 * MAX_INFO_SCANNER_RUNTIME_HOURS;
 
+        /// <summary>
+        /// Procedure name to call to store the dataset info
+        /// </summary>
+        /// <remarks>
+        /// On PostgreSQL this is cap.cache_dataset_info_xml
+        /// </remarks>
         private const string MS_FILE_SCANNER_DS_INFO_SP = "cache_dataset_info_xml";
 
         private const string STORED_FILE_SUFFIX = ".stored";
@@ -884,7 +890,7 @@ namespace DatasetInfoPlugin
             }
             else
             {
-                // Call SP cache_dataset_info_xml to store datasetInfoXML in table T_Dataset_Info_XML
+                // Call procedure cache_dataset_info_xml to store datasetInfoXML in table T_Dataset_Info_XML
                 success = PostDatasetInfoXml(combinedDatasetInfoXML, out errorMessage);
             }
 
@@ -1690,10 +1696,10 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Post the dataset info in datasetInfoXML to the database, using the specified connection string and stored procedure
-        /// This version assumes the stored procedure takes DatasetID as the first parameter
+        /// Post the dataset info in datasetInfoXML to the database, using the specified connection string and procedure
+        /// This version assumes the procedure takes DatasetID as the first parameter
         /// </summary>
-        /// <param name="datasetID">Dataset ID to send to the stored procedure</param>
+        /// <param name="datasetID">Dataset ID to send to the procedure</param>
         /// <param name="datasetInfoXML">Database info XML</param>
         /// <param name="connectionString">Database connection string</param>
         /// <param name="storedProcedureName">Stored procedure</param>
@@ -1722,7 +1728,7 @@ namespace DatasetInfoPlugin
                     dsInfoXMLClean = datasetInfoXML;
                 }
 
-                // Call stored procedure storedProcedure using connection string connectionString
+                // Call procedure procedureName using connection string connectionString
 
                 if (string.IsNullOrEmpty(connectionString))
                 {
@@ -1757,13 +1763,13 @@ namespace DatasetInfoPlugin
                 }
                 else
                 {
-                    LogError("Error calling stored procedure to store dataset info XML, return code = " + returnParam.Value.CastDBVal<string>());
+                    LogError("Error calling procedure to store dataset info XML, return code = " + returnParam.Value.CastDBVal<string>());
                     success = false;
                 }
             }
             catch (Exception ex)
             {
-                LogError("Error calling stored procedure to store dataset info XML", ex);
+                LogError("Error calling procedure to store dataset info XML", ex);
                 success = false;
             }
 

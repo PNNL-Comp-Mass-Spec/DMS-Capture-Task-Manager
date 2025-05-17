@@ -497,12 +497,12 @@ namespace ArchiveStatusCheckPlugin
 
                 if (spError)
                 {
-                    // One or more calls to the stored procedure failed
+                    // One or more calls to the procedure failed
                 }
             }
             catch (Exception ex)
             {
-                LogError("Exception calling stored procedure set_myemsl_upload_superseded_if_failed, job " + mJob, ex);
+                LogError("Exception calling procedure cap.set_myemsl_upload_superseded_if_failed, job " + mJob, ex);
             }
         }
 

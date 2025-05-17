@@ -695,7 +695,7 @@ namespace CaptureTaskManager
                 SaveToolVersionInfoFile(mWorkDir, toolVersionInfoCombined);
             }
 
-            // Setup for execution of the stored procedure
+            // Setup for calling the procedure
             var dbTools = mCaptureDbProcedureExecutor;
             var cmd = dbTools.CreateCommand(SP_NAME_SET_TASK_TOOL_VERSION, CommandType.StoredProcedure);
 
@@ -1040,7 +1040,7 @@ namespace CaptureTaskManager
 
             var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
-            // Note that if transactionId is 0, the stored procedure will leave TransactionID unchanged in table T_MyEMSL_Uploads
+            // Note that if transactionId is 0, the procedure will leave TransactionID unchanged in table T_MyEMSL_Uploads
 
             dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: mDatasetID);
             dbTools.AddTypedParameter(cmd, "@statusNum", SqlType.Int, value: statusNum);
@@ -1071,7 +1071,7 @@ namespace CaptureTaskManager
 
             if (resCode != 0 && returnCode == 0)
             {
-                LogError("ExecuteSP() reported result code {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob);
+                LogError("ExecuteSP() reported result code {0} calling procedure {1}, job {2}", resCode, PROCEDURE_NAME, mJob);
                 return false;
             }
 

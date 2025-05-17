@@ -32,7 +32,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Cleanup status codes for stored procedure report_manager_error_cleanup
+        /// Cleanup status codes for procedure mc.report_manager_error_cleanup
         /// </summary>
         public enum CleanupActionCodeConstants
         {
@@ -127,9 +127,9 @@ namespace CaptureTaskManager
 
         /// <summary>
         /// Remove all files in the working directory
-        /// Also calls stored procedure report_manager_error_cleanup at the start and finish of the cleanup
+        /// Also calls procedure mc.report_manager_error_cleanup at the start and finish of the cleanup
         /// </summary>
-        /// <param name="managerErrorCleanupMode"></param>
+        /// <param name="managerErrorCleanupMode">Manager error cleanup mode</param>
         /// <returns>True if success, false if an error</returns>
         public bool AutoCleanupManagerErrors(CleanupModeConstants managerErrorCleanupMode)
         {
@@ -145,7 +145,7 @@ namespace CaptureTaskManager
 
             LogMessage("Attempting to automatically clean the work directory");
 
-            // Call SP report_manager_error_cleanup with @ActionCode=1
+            // Call procedure report_manager_error_cleanup with @ActionCode=1
             ReportManagerErrorCleanup(CleanupActionCodeConstants.Start);
 
             // Delete all folders and subdirectories in the working directory
@@ -169,8 +169,8 @@ namespace CaptureTaskManager
                 }
             }
 
-            // If successful, call SP report_manager_error_cleanup with @ActionCode=2
-            // Otherwise call SP report_manager_error_cleanup with @ActionCode=3
+            // If successful, call procedure mc.report_manager_error_cleanup with @ActionCode=2
+            // Otherwise call procedure mc.report_manager_error_cleanup with @ActionCode=3
 
             if (success)
             {

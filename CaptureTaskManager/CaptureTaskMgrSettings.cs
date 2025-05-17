@@ -44,7 +44,7 @@ namespace CaptureTaskManager
         public string DMSCaptureSchema => SchemaPrefixes[SchemaPrefix.DMSCapture];
 
         /// <summary>
-        /// Calls stored procedure ack_manager_update_required to acknowledge that the manager has exited so that an update can be applied
+        /// Calls procedure mc.ack_manager_update_required to acknowledge that the manager has exited so that an update can be applied
         /// </summary>
         public void AckManagerUpdateRequired()
         {
