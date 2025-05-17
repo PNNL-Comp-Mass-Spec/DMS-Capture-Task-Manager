@@ -236,7 +236,7 @@ namespace CaptureTaskManager
             }
         }
 
-        private string DbCStr(object paramValue)
+        private static string DbCStr(object paramValue)
         {
             // If input object is DbNull, returns string.Empty, otherwise returns String representation of object
             if (paramValue == null || ReferenceEquals(paramValue, DBNull.Value))
@@ -247,7 +247,7 @@ namespace CaptureTaskManager
             return paramValue.ToString();
         }
 
-        protected float DbCFloat(object paramValue)
+        protected static float DbCFloat(object paramValue)
         {
             // If input object is DbNull, returns 0.0, otherwise returns Single representation of object
             if (ReferenceEquals(paramValue, DBNull.Value))
@@ -258,7 +258,7 @@ namespace CaptureTaskManager
             return (float)paramValue;
         }
 
-        protected double DbCDbl(object paramValue)
+        protected static double DbCDbl(object paramValue)
         {
             // If input object is DbNull, returns 0.0, otherwise returns Double representation of object
             if (ReferenceEquals(paramValue, DBNull.Value))
@@ -269,7 +269,7 @@ namespace CaptureTaskManager
             return (double)paramValue;
         }
 
-        protected int DbCInt(object paramValue)
+        protected static int DbCInt(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Integer representation of object
             if (ReferenceEquals(paramValue, DBNull.Value))
@@ -280,7 +280,7 @@ namespace CaptureTaskManager
             return (int)paramValue;
         }
 
-        protected long DbCLng(object paramValue)
+        protected static long DbCLng(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Integer representation of object
             if (ReferenceEquals(paramValue, DBNull.Value))
@@ -291,7 +291,7 @@ namespace CaptureTaskManager
             return (long)paramValue;
         }
 
-        protected decimal DbCDec(object paramValue)
+        protected static decimal DbCDec(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Decimal representation of object
             if (ReferenceEquals(paramValue, DBNull.Value))
@@ -302,7 +302,7 @@ namespace CaptureTaskManager
             return (decimal)paramValue;
         }
 
-        protected short DbCShort(object paramValue)
+        protected static short DbCShort(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Short representation of object
             if (ReferenceEquals(paramValue, DBNull.Value))

@@ -591,7 +591,7 @@ namespace ImsDemuxPlugin
             RegisterEvents(mMzaTools);
         }
 
-        private bool CheckForCalibrationError(string datasetDirectoryPath)
+        private static bool CheckForCalibrationError(string datasetDirectoryPath)
         {
             var calibrationLogPath = Path.Combine(datasetDirectoryPath, DemuxTools.CALIBRATION_LOG_FILE);
 
@@ -627,7 +627,7 @@ namespace ImsDemuxPlugin
             return calibrationError;
         }
 
-        private bool CheckForManualCalibration(string decodedUimfFilePath, out double calibrationSlope, out double calibrationIntercept)
+        private static bool CheckForManualCalibration(string decodedUimfFilePath, out double calibrationSlope, out double calibrationIntercept)
         {
             calibrationSlope = 0;
             calibrationIntercept = 0;

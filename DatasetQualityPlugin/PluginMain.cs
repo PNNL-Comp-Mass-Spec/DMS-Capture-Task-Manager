@@ -822,7 +822,7 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private void ParseDatasetInfoFile(string datasetDirectoryPath, string datasetName, ICollection<string> scanTypes, out int scanCount, out int scanCountMS)
+        private static void ParseDatasetInfoFile(string datasetDirectoryPath, string datasetName, ICollection<string> scanTypes, out int scanCount, out int scanCountMS)
         {
             var datasetInfoFile = new FileInfo(Path.Combine(datasetDirectoryPath, "QC", datasetName + "_DatasetInfo.xml"));
 
@@ -864,7 +864,7 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private void PostProcessMetricsFile(string metricsOutputFileName)
+        private static void PostProcessMetricsFile(string metricsOutputFileName)
         {
             var replaceOriginal = false;
 
@@ -1458,7 +1458,7 @@ namespace DatasetQualityPlugin
         /// <param name="progressMatcher"></param>
         /// <param name="percentComplete"></param>
         /// <returns>True if progress was updated, false if the data line is not in the expected form</returns>
-        private bool UpdateProgress(string dataLine, Regex progressMatcher, ref float percentComplete)
+        private static bool UpdateProgress(string dataLine, Regex progressMatcher, ref float percentComplete)
         {
             var match = progressMatcher.Match(dataLine);
 
