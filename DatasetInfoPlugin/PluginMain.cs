@@ -1702,9 +1702,9 @@ namespace DatasetInfoPlugin
         /// <param name="datasetID">Dataset ID to send to the procedure</param>
         /// <param name="datasetInfoXML">Database info XML</param>
         /// <param name="connectionString">Database connection string</param>
-        /// <param name="storedProcedureName">Stored procedure</param>
+        /// <param name="procedureName">Procedure</param>
         /// <returns>True if success; false if failure</returns>
-        private bool PostDatasetInfoXml(int datasetID, string datasetInfoXML, string connectionString, string storedProcedureName)
+        private bool PostDatasetInfoXml(int datasetID, string datasetInfoXML, string connectionString, string procedureName)
         {
             bool success;
 
@@ -1736,9 +1736,9 @@ namespace DatasetInfoPlugin
                     return false;
                 }
 
-                if (string.IsNullOrEmpty(storedProcedureName))
+                if (string.IsNullOrEmpty(procedureName))
                 {
-                    storedProcedureName = "cache_dataset_info_xml";
+                    procedureName = "cache_dataset_info_xml";
                 }
 
                 var applicationName = "MSFileInfoScanner_DatasetID_" + datasetID;
@@ -1748,7 +1748,7 @@ namespace DatasetInfoPlugin
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse);
                 RegisterEvents(dbTools);
 
-                var cmd = dbTools.CreateCommand(storedProcedureName, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(procedureName, CommandType.StoredProcedure);
 
                 var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = datasetID;
