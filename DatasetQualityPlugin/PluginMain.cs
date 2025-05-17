@@ -29,7 +29,7 @@ namespace DatasetQualityPlugin
         private const int MAX_QUAMETER_RUNTIME_HOURS = 24;
         private const int MAX_QUAMETER_RUNTIME_MINUTES = 60 * MAX_QUAMETER_RUNTIME_HOURS;
 
-        private const string STORE_QUAMETER_RESULTS_SP_NAME = "store_quameter_results";
+        private const string PROCEDURE_STORE_QUAMETER_RESULTS = "store_quameter_results";
         private const string QUAMETER_IDFREE_METRICS_FILE = "Quameter_IDFree.tsv";
         private const string QUAMETER_CONSOLE_OUTPUT_FILE = "Quameter_Console_Output.txt";
 
@@ -648,7 +648,7 @@ namespace DatasetQualityPlugin
             }
 
             // Store the results by stepping through the arrays
-            // Skip the first two items provided they are "filename" and "StartTimeStamp")
+            // Skip the first two items provided they are "filename" and "StartTimeStamp"
             var indexStart = 0;
 
             if (string.Equals(headerNames[indexStart], "filename", StringComparison.OrdinalIgnoreCase))
@@ -944,7 +944,7 @@ namespace DatasetQualityPlugin
 
                 // Call procedure store_quameter_results in the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
                 var dbTools = mCaptureDbProcedureExecutor;
-                var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_STORE_QUAMETER_RESULTS, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
                 // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
@@ -965,7 +965,7 @@ namespace DatasetQualityPlugin
 
                 mRetData.CloseoutMsg = string.Format(
                     "Error storing Quameter Results in database, {0} returned {1}",
-                    STORE_QUAMETER_RESULTS_SP_NAME, returnParam.Value.CastDBVal<string>());
+                    PROCEDURE_STORE_QUAMETER_RESULTS, returnParam.Value.CastDBVal<string>());
 
                 LogError(mRetData.CloseoutMsg);
                 return false;

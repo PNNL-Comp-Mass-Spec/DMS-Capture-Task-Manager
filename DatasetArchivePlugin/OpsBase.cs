@@ -35,7 +35,7 @@ namespace DatasetArchivePlugin
 
         private const string LARGE_DATASET_UPLOAD_ERROR = "Failure uploading a large amount of data; manual reset required";
 
-        private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK = "make_new_archive_update_task";
+        private const string PROCEDURE_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK = "make_new_archive_update_task";
 
         private readonly IMgrParams mMgrParams;
         protected readonly ITaskParams mTaskParams;
@@ -191,7 +191,7 @@ namespace DatasetArchivePlugin
 
                 var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
 
-                var cmd = dbTools.CreateCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
                 // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"

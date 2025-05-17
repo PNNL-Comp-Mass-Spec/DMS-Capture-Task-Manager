@@ -32,7 +32,7 @@ namespace CaptureTaskManager
 
         public const string EXCEPTION_CREATING_OUTPUT_DIRECTORY = "Exception creating output directory";
 
-        private const string SP_NAME_SET_TASK_TOOL_VERSION = "set_ctm_step_task_tool_version";
+        private const string PROCEDURE_NAME_SET_TASK_TOOL_VERSION = "set_ctm_step_task_tool_version";
 
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
@@ -697,7 +697,7 @@ namespace CaptureTaskManager
 
             // Setup for calling the procedure
             var dbTools = mCaptureDbProcedureExecutor;
-            var cmd = dbTools.CreateCommand(SP_NAME_SET_TASK_TOOL_VERSION, CommandType.StoredProcedure);
+            var cmd = dbTools.CreateCommand(PROCEDURE_NAME_SET_TASK_TOOL_VERSION, CommandType.StoredProcedure);
 
             dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mTaskParams.GetParam("Job", 0));
             dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mTaskParams.GetParam("Step", 0));
@@ -720,8 +720,8 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            LogError("Stored procedure {0} reported return code {1}, job {2}",
-                SP_NAME_SET_TASK_TOOL_VERSION, returnCodeParam.Value.CastDBVal<string>(), mJob);
+            LogError("Procedure {0} reported return code {1}, job {2}",
+                PROCEDURE_NAME_SET_TASK_TOOL_VERSION, returnCodeParam.Value.CastDBVal<string>(), mJob);
 
             return false;
         }
@@ -1025,7 +1025,7 @@ namespace CaptureTaskManager
             long transactionId = 0,
             bool fatalError = false)
         {
-            const string SP_NAME = "update_myemsl_upload_ingest_stats";
+            const string PROCEDURE_NAME = "update_myemsl_upload_ingest_stats";
 
             if (transactionId > 0 && transactionId != statusNum)
             {
@@ -1038,7 +1038,7 @@ namespace CaptureTaskManager
 
             var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
 
-            var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
+            var cmd = dbTools.CreateCommand(PROCEDURE_NAME, CommandType.StoredProcedure);
 
             // Note that if transactionId is 0, the procedure will leave TransactionID unchanged in table T_MyEMSL_Uploads
 
@@ -1075,8 +1075,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            LogError("Stored procedure {0} reported return code {1}, job {2}",
-                SP_NAME, returnCodeParam.Value.CastDBVal<string>(), mJob);
+            LogError("Procedure {0} reported return code {1}, job {2}", PROCEDURE_NAME, returnCodeParam.Value.CastDBVal<string>(), mJob);
 
             return false;
         }

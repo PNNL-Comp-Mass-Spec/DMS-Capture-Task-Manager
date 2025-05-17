@@ -508,7 +508,7 @@ namespace ArchiveStatusCheckPlugin
 
         private void UpdateSupersededURIs(IReadOnlyCollection<int> statusNumsToIgnore, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
-            const string SP_NAME = "set_myemsl_upload_superseded_if_failed";
+            const string PROCEDURE_NAME = "set_myemsl_upload_superseded_if_failed";
 
             try
             {
@@ -517,7 +517,7 @@ namespace ArchiveStatusCheckPlugin
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(statusNumsToIgnore, statusData);
 
                 var dbTools = mCaptureDbProcedureExecutor;
-                var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
                 // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
@@ -541,18 +541,18 @@ namespace ArchiveStatusCheckPlugin
                 var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                 LogError(
-                    "Error {0} calling stored procedure {1}, job {2}: {3}",
-                    returnParam.Value.CastDBVal<string>(), SP_NAME, mJob, message);
+                    "Error {0} calling procedure {1}, job {2}: {3}",
+                    returnParam.Value.CastDBVal<string>(), PROCEDURE_NAME, mJob, message);
             }
             catch (Exception ex)
             {
-                LogError(ex, "Exception calling stored procedure {0}, job {1}", SP_NAME, mJob);
+                LogError(ex, "Exception calling procedure {0}, job {1}", PROCEDURE_NAME, mJob);
             }
         }
 
         private void UpdateVerifiedURIs(Dictionary<int, string> verifiedURIs, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
-            const string SP_NAME = "set_myemsl_upload_verified";
+            const string PROCEDURE_NAME = "set_myemsl_upload_verified";
 
             try
             {
@@ -566,7 +566,7 @@ namespace ArchiveStatusCheckPlugin
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(verifiedStatusNums, statusData);
 
                 var dbTools = mCaptureDbProcedureExecutor;
-                var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
                 // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
@@ -591,12 +591,12 @@ namespace ArchiveStatusCheckPlugin
                 var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                 LogError(
-                    "Error {0} calling stored procedure {1}, job {2}: {3}",
-                    returnParam.Value.CastDBVal<string>(), SP_NAME, mJob, message);
+                    "Error {0} calling procedure {1}, job {2}: {3}",
+                    returnParam.Value.CastDBVal<string>(), PROCEDURE_NAME, mJob, message);
             }
             catch (Exception ex)
             {
-                LogError(ex, "Exception calling stored procedure {0}, job {1}", SP_NAME, mJob);
+                LogError(ex, "Exception calling procedure {0}, job {1}", PROCEDURE_NAME, mJob);
             }
         }
     }

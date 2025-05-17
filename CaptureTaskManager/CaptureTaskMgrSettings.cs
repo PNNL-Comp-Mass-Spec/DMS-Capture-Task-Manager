@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: Ack, DMS, Seqs, Utils
 
-        private const string SP_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
+        private const string PROCEDURE_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
 
         /// <summary>
         /// Connection string to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
@@ -57,11 +57,11 @@ namespace CaptureTaskManager
                 {
                     if (CTMUtilities.OfflineMode)
                     {
-                        OnDebugEvent("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since offline");
+                        OnDebugEvent("Skipping call to " + PROCEDURE_NAME_ACK_MANAGER_UPDATE + " since offline");
                     }
                     else
                     {
-                        OnDebugEvent("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since the Manager Control connection string is empty");
+                        OnDebugEvent("Skipping call to " + PROCEDURE_NAME_ACK_MANAGER_UPDATE + " since the Manager Control connection string is empty");
                     }
 
                     return;
@@ -74,8 +74,8 @@ namespace CaptureTaskManager
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
-                // Set up the command object prior to SP execution
-                var cmd = dbTools.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
+                // Set up the command object prior to calling the procedure
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
@@ -86,12 +86,12 @@ namespace CaptureTaskManager
                 if (resCode != 0)
                 {
                     OnErrorEvent("ExecuteSP() reported result code {0} calling {1}",
-                        resCode, SP_NAME_ACK_MANAGER_UPDATE);
+                        resCode, PROCEDURE_NAME_ACK_MANAGER_UPDATE);
                 }
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception calling " + SP_NAME_ACK_MANAGER_UPDATE, ex);
+                OnErrorEvent("Exception calling " + PROCEDURE_NAME_ACK_MANAGER_UPDATE, ex);
             }
         }
 

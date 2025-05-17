@@ -19,9 +19,9 @@ namespace CaptureTaskManager
     /// </summary>
     internal class CaptureTask : DbTask, ITaskParams
     {
-        private const string SP_NAME_SET_COMPLETE = "set_ctm_step_task_complete";
-        private const string SP_NAME_REPORT_IDLE = "report_capture_task_manager_idle";
-        private const string SP_NAME_REQUEST_TASK = "request_ctm_step_task";
+        private const string PROCEDURE_NAME_SET_COMPLETE = "set_ctm_step_task_complete";
+        private const string PROCEDURE_NAME_REPORT_IDLE = "report_capture_task_manager_idle";
+        private const string PROCEDURE_NAME_REQUEST_TASK = "request_ctm_step_task";
 
         /// <summary>
         /// When true, show additional messages at the console
@@ -256,7 +256,7 @@ namespace CaptureTaskManager
                 // On Postgres, the procedure returns the parameters using a RefCursor, but ExecuteSPData auto-converts that to a result set
 
                 var dbTools = mCaptureTaskDBProcedureExecutor;
-                var cmd = dbTools.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
                 var jobParam = dbTools.AddParameter(cmd, "@job", SqlType.Int, ParameterDirection.InputOutput);
@@ -411,14 +411,14 @@ namespace CaptureTaskManager
         {
             // Setup for calling the procedure
             var dbTools = mCaptureTaskDBProcedureExecutor;
-            var cmd = dbTools.CreateCommand(SP_NAME_REPORT_IDLE, CommandType.StoredProcedure);
+            var cmd = dbTools.CreateCommand(PROCEDURE_NAME_REPORT_IDLE, CommandType.StoredProcedure);
 
             dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
             dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
             var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-            // Execute the Stored Procedure (retry the call, up to 3 times)
+            // Call the procedure (retry the call, up to 3 times)
             var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
@@ -430,11 +430,11 @@ namespace CaptureTaskManager
 
             if (resCode != 0 && returnCode == 0)
             {
-                LogError("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_REPORT_IDLE);
+                LogError("ExecuteSP() reported result code {0} calling {1}", resCode, PROCEDURE_NAME_REPORT_IDLE);
                 return;
             }
 
-            LogError("Stored procedure {0} reported return code {1}", SP_NAME_REPORT_IDLE, returnCode);
+            LogError("Procedure {0} reported return code {1}", PROCEDURE_NAME_REPORT_IDLE, returnCode);
         }
 
         /// <summary>
@@ -451,7 +451,7 @@ namespace CaptureTaskManager
             {
                 // Setup for calling the procedure
                 var dbTools = mCaptureTaskDBProcedureExecutor;
-                var cmd = dbTools.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME_SET_COMPLETE, CommandType.StoredProcedure);
 
                 var job = int.Parse(mJobParams["Job"]);
 
@@ -464,7 +464,7 @@ namespace CaptureTaskManager
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
                 var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-                LogDebug("Calling stored procedure " + SP_NAME_SET_COMPLETE);
+                LogDebug("Calling procedure " + PROCEDURE_NAME_SET_COMPLETE);
 
                 if (mDebugLevel >= 5)
                 {
@@ -487,14 +487,14 @@ namespace CaptureTaskManager
                     return false;
                 }
 
-                LogError("Stored procedure {0} reported return code {1}, job {2}",
-                    SP_NAME_SET_COMPLETE, returnCodeParam.Value.CastDBVal<string>(), job);
+                LogError("Procedure {0} reported return code {1}, job {2}",
+                    PROCEDURE_NAME_SET_COMPLETE, returnCodeParam.Value.CastDBVal<string>(), job);
 
                 return false;
             }
             catch (Exception ex)
             {
-                LogError("Exception calling stored procedure " + SP_NAME_SET_COMPLETE, ex);
+                LogError("Exception calling procedure " + PROCEDURE_NAME_SET_COMPLETE, ex);
                 return false;
             }
         }

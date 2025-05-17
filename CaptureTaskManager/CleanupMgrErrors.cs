@@ -6,7 +6,7 @@ namespace CaptureTaskManager
 {
     public class CleanupMgrErrors : LoggerBase
     {
-        private const string SP_NAME_REPORT_MGR_CLEANUP = "report_manager_error_cleanup";
+        private const string PROCEDURE_NAME_REPORT_MGR_CLEANUP = "report_manager_error_cleanup";
 
         /// <summary>
         /// Options for auto-removing files from the working directory when the manager starts
@@ -195,11 +195,11 @@ namespace CaptureTaskManager
             {
                 if (CTMUtilities.OfflineMode)
                 {
-                    LogDebug("Skipping call to " + SP_NAME_REPORT_MGR_CLEANUP + " since offline");
+                    LogDebug("Skipping call to " + PROCEDURE_NAME_REPORT_MGR_CLEANUP + " since offline");
                 }
                 else
                 {
-                    LogError("Skipping call to " + SP_NAME_REPORT_MGR_CLEANUP + " since the Manager Control connection string is empty");
+                    LogError("Skipping call to " + PROCEDURE_NAME_REPORT_MGR_CLEANUP + " since the Manager Control connection string is empty");
                 }
 
                 return;
@@ -212,7 +212,7 @@ namespace CaptureTaskManager
                 var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
-                var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_CLEANUP, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME_REPORT_MGR_CLEANUP, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, mManagerName);
                 dbTools.AddParameter(cmd, "@state", SqlType.Int).Value = managerCleanupActionCode;
@@ -228,11 +228,11 @@ namespace CaptureTaskManager
 
                 if (mMgrConfigDBConnectionString == null)
                 {
-                    errorMessage = "Exception calling " + SP_NAME_REPORT_MGR_CLEANUP + " in ReportManagerErrorCleanup; empty connection string";
+                    errorMessage = "Exception calling " + PROCEDURE_NAME_REPORT_MGR_CLEANUP + " in ReportManagerErrorCleanup; empty connection string";
                 }
                 else
                 {
-                    errorMessage = "Exception calling " + SP_NAME_REPORT_MGR_CLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
+                    errorMessage = "Exception calling " + PROCEDURE_NAME_REPORT_MGR_CLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
                 }
 
                 LogError(errorMessage, ex);

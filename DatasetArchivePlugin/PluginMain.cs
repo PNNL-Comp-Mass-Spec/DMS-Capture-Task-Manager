@@ -21,7 +21,7 @@ namespace DatasetArchivePlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        private const string SP_NAME_STORE_MYEMSL_STATS = "store_myemsl_upload_stats";
+        private const string PROCEDURE_NAME_STORE_MYEMSL_STATS = "store_myemsl_upload_stats";
 
         private bool mSubmittedToMyEMSL;
 
@@ -165,7 +165,7 @@ namespace DatasetArchivePlugin
             {
                 // Setup for calling the procedure
                 var dbTools = mCaptureDbProcedureExecutor;
-                var cmd = dbTools.CreateCommand(SP_NAME_STORE_MYEMSL_STATS, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(PROCEDURE_NAME_STORE_MYEMSL_STATS, CommandType.StoredProcedure);
 
                 var subDir = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
 
