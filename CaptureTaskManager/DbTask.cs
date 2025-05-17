@@ -206,10 +206,8 @@ namespace CaptureTaskManager
                         continue;
                     }
 
-                    if (mJobParams.ContainsKey(paramName))
+                    if (mJobParams.TryGetValue(paramName, out var existingValue))
                     {
-                        var existingValue = mJobParams[paramName];
-
                         if (string.Equals(existingValue, paramValue))
                         {
                             LogDebug("Skipping duplicate task parameter named {0}: the new value matches the existing value of '{1}'",
