@@ -892,6 +892,14 @@ namespace CaptureTaskManager
                     }
 
                     // Attempt to get a capture task
+
+                    // To enable a step-tool for debugging, use
+                    // select * from cap.enable_disable_ctm_step_tool_for_debugging('DatasetArchive', true);
+
+                    // If you are trying to debug a specific capture task, but the database does not assign the task to processor Monroe_CTM,
+                    // make sure that the storage server that the dataset resides on is associated with the machine defined in t_local_processors
+                    // select * from cap.t_local_processors where processor_name = 'Monroe_CTM';
+
                     var taskReturn = mTask.RequestTask();
 
                     switch (taskReturn)

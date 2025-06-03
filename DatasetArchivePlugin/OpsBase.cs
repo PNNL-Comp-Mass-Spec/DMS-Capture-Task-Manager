@@ -807,6 +807,7 @@ namespace DatasetArchivePlugin
             if (WarningMsg.Contains(ZERO_BYTE_FILE_FOUND))
                 return;
 
+            // Zero byte file found and skipped
             var warningMessage = string.Format("{0} and skipped: {1}", ZERO_BYTE_FILE_FOUND, dataFile.Name);
 
             WarningMsg = CTMUtilities.AppendToString(WarningMsg, warningMessage);

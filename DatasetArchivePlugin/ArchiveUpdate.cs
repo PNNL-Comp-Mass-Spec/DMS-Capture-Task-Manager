@@ -64,6 +64,7 @@ namespace DatasetArchivePlugin
             const bool recurse = true;
 
             // Set this to .CreateTarLocal to create the .tar file locally and thus not upload the data to MyEMSL
+            // Use this mode to simulate uploading data to MyEMSL by instead saving the .tar file to disk
             var debugMode = TarStreamUploader.UploadDebugMode.DebugDisabled;
 
             if (mTaskParams.GetParam("DebugTestTar", false))
