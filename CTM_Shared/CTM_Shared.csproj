@@ -28,7 +28,7 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.8" />
-    <PackageReference Include="PRISM-Library" Version="2.9.12" />
+    <PackageReference Include="PRISM-Library" Version="2.9.16" />
     <PackageReference Include="PRISMWin-Library" Version="1.1.22" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
