@@ -43,7 +43,6 @@ namespace DatasetArchivePlugin
         private readonly FileTools mFileTools;
 
         protected string mErrMsg = string.Empty;
-        private string mDSNamePath;
 
         private bool mMyEmslUploadSuccess;
 
@@ -139,11 +138,11 @@ namespace DatasetArchivePlugin
             var storagePath = mTaskParams.GetParam("Storage_Path");
             var datasetDirectory = mTaskParams.GetParam("Directory");
 
-            mDSNamePath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory));
+            var datasetDirectoryPath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory));
 
-            if (string.IsNullOrWhiteSpace(mDSNamePath))
+            if (string.IsNullOrWhiteSpace(datasetDirectoryPath))
             {
-                mErrMsg = "Dataset folder path in mDSNamePath is empty";
+                mErrMsg = "Dataset directory path in datasetDirectoryPath is empty";
 
                 if (string.IsNullOrWhiteSpace(baseStoragePath))
                 {
@@ -166,9 +165,9 @@ namespace DatasetArchivePlugin
             }
 
             // Verify dataset is in specified location
-            if (!VerifyDSPresent(mDSNamePath))
+            if (!VerifyDSPresent(datasetDirectoryPath))
             {
-                mErrMsg = "Dataset folder " + mDSNamePath + " not found";
+                mErrMsg = "Dataset directory " + datasetDirectoryPath + " not found";
                 OnErrorEvent(mErrMsg);
                 LogOperationFailed(mDatasetName, string.Empty, true);
                 return false;
@@ -706,14 +705,13 @@ namespace DatasetArchivePlugin
             }
         }
 
-        /// <summary>
-        /// Verifies that the specified dataset folder exists
+        /// Verifies that the specified dataset directory exists
         /// </summary>
-        /// <param name="dsNamePath">Fully qualified path to dataset folder</param>
-        /// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
-        private static bool VerifyDSPresent(string dsNamePath)
+        /// <param name="datasetDirectoryPath">Fully qualified path to dataset directory</param>
+        /// <returns>True if dataset directory is present; otherwise false</returns>
+        private static bool VerifyDSPresent(string datasetDirectoryPath)
         {
-            return Directory.Exists(dsNamePath);
+            return Directory.Exists(datasetDirectoryPath);
         }
 
         public event EventHandler<MyEMSLUploadEventArgs> MyEMSLUploadComplete;
