@@ -675,7 +675,7 @@ namespace DatasetInfoPlugin
 
                 if (fileCopiedLocally)
                 {
-                    mFileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
+                    FileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
                 }
                 else if (directoryCopiedLocally)
                 {

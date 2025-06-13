@@ -123,13 +123,13 @@ namespace CaptureToolPlugin.DataCapture
                 }
 
                 // Get the initial size of the directory
-                var initialDirectorySize = mFileTools.GetDirectorySize(targetDirectory.FullName);
+                var initialDirectorySize = FileTools.GetDirectorySize(targetDirectory.FullName);
 
                 // Wait for specified sleep interval
                 VerifyConstantSizeSleep(sleepIntervalSeconds, "directory " + targetDirectory.Name);
 
                 // Get the final size of the directory and compare
-                var finalDirectorySize = mFileTools.GetDirectorySize(targetDirectory.FullName);
+                var finalDirectorySize = FileTools.GetDirectorySize(targetDirectory.FullName);
 
                 if (finalDirectorySize == initialDirectorySize)
                 {
