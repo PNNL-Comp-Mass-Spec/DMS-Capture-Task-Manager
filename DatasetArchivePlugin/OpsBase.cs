@@ -255,6 +255,100 @@ namespace DatasetArchivePlugin
         }
 
         /// <summary>
+        /// Return the text after the colon in statusMessage
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <returns>Text if the colon was found, otherwise an empty string</returns>
+        private static string GetFilenameFromStatus(string statusMessage)
+        {
+            var colonIndex = statusMessage.IndexOf(':');
+
+            if (colonIndex >= 0)
+            {
+                return statusMessage.Substring(colonIndex + 1).Trim();
+            }
+
+            return string.Empty;
+        }
+        /// <summary>
+        /// Perform several tasks after the MyEMSL Uploader raises an exception
+        /// </summary>
+        /// <param name="ex">Exception</param>
+        /// <param name="myEMSLUploader">Uploader instance</param>
+        /// <param name="startTime">Start time</param>
+        /// <param name="useTestInstance">When true, use the test instance</param>
+        private void HandleUploadException(Exception ex, MyEMSLUploader myEMSLUploader, DateTime startTime, bool useTestInstance)
+        {
+            // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
+
+            var errorCode = ex.Message.GetHashCode();
+
+            if (errorCode == 0)
+            {
+                errorCode = 1;
+            }
+
+            var elapsedTime = DateTime.UtcNow.Subtract(startTime);
+
+            if (myEMSLUploader == null)
+            {
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                if (errorCode == 0)
+                {
+                    return;
+                }
+
+                var eusInfo = new Upload.EUSInfo();
+                eusInfo.Clear();
+
+                var emptyArgs = new MyEMSLUploadEventArgs(
+                    0, 0,
+                    0, elapsedTime.TotalSeconds,
+                    string.Empty, eusInfo,
+                    errorCode, useTestInstance);
+
+                OnMyEMSLUploadComplete(emptyArgs);
+                return;
+            }
+
+            // Exit this method (skipping the call to OnMyEMSLUploadComplete) if the error code is 0 and no files were added or updated
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            if (errorCode == 0 && myEMSLUploader.FileCountNew == 0 && myEMSLUploader.FileCountUpdated == 0)
+            {
+                return;
+            }
+
+            var uploadArgs = new MyEMSLUploadEventArgs(
+                myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
+                myEMSLUploader.Bytes, elapsedTime.TotalSeconds,
+                myEMSLUploader.StatusURI, myEMSLUploader.EUSInfo,
+                errorCode, useTestInstance);
+
+            OnMyEMSLUploadComplete(uploadArgs);
+        }
+
+        /// <summary>
+        /// Writes a log entry for a failed archive operation
+        /// </summary>
+        /// <param name="dsName">Name of dataset</param>
+        /// <param name="reason">Reason for failed operation</param>
+        /// <param name="logToDB">True to log to the database and a local file; false for local file only</param>
+        private void LogOperationFailed(string dsName, string reason = "", bool logToDB = false)
+        {
+            var msg = string.Format("{0} failed, dataset {1}{2}",
+                mArchiveOrUpdate, dsName, string.IsNullOrEmpty(reason) ? string.Empty : "; " + reason);
+
+            if (logToDB)
+            {
+                LogTools.LogError(msg, null, true);
+            }
+            else
+            {
+                OnErrorEvent(msg);
+            }
+        }
+
+        /// <summary>
         /// Use MyEMSLUploader to upload the data to MyEMSL, trying up to maxAttempts times
         /// </summary>
         /// <param name="maxAttempts">Maximum upload attempts</param>
@@ -611,100 +705,6 @@ namespace DatasetArchivePlugin
         }
 
         /// <summary>
-        /// Return the text after the colon in statusMessage
-        /// </summary>
-        /// <param name="statusMessage">Status message</param>
-        /// <returns>Text if the colon was found, otherwise an empty string</returns>
-        private static string GetFilenameFromStatus(string statusMessage)
-        {
-            var colonIndex = statusMessage.IndexOf(':');
-
-            if (colonIndex >= 0)
-            {
-                return statusMessage.Substring(colonIndex + 1).Trim();
-            }
-
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// Perform several tasks after the MyEMSL Uploader raises an exception
-        /// </summary>
-        /// <param name="ex">Exception</param>
-        /// <param name="myEMSLUploader">Uploader instance</param>
-        /// <param name="startTime">Start time</param>
-        /// <param name="useTestInstance">When true, use the test instance</param>
-        private void HandleUploadException(Exception ex, MyEMSLUploader myEMSLUploader, DateTime startTime, bool useTestInstance)
-        {
-            // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
-
-            var errorCode = ex.Message.GetHashCode();
-
-            if (errorCode == 0)
-            {
-                errorCode = 1;
-            }
-
-            var elapsedTime = DateTime.UtcNow.Subtract(startTime);
-
-            if (myEMSLUploader == null)
-            {
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                if (errorCode == 0)
-                {
-                    return;
-                }
-
-                var eusInfo = new Upload.EUSInfo();
-                eusInfo.Clear();
-
-                var emptyArgs = new MyEMSLUploadEventArgs(
-                    0, 0,
-                    0, elapsedTime.TotalSeconds,
-                    string.Empty, eusInfo,
-                    errorCode, useTestInstance);
-
-                OnMyEMSLUploadComplete(emptyArgs);
-                return;
-            }
-
-            // Exit this method (skipping the call to OnMyEMSLUploadComplete) if the error code is 0 and no files were added or updated
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (errorCode == 0 && myEMSLUploader.FileCountNew == 0 && myEMSLUploader.FileCountUpdated == 0)
-            {
-                return;
-            }
-
-            var uploadArgs = new MyEMSLUploadEventArgs(
-                myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
-                myEMSLUploader.Bytes, elapsedTime.TotalSeconds,
-                myEMSLUploader.StatusURI, myEMSLUploader.EUSInfo,
-                errorCode, useTestInstance);
-
-            OnMyEMSLUploadComplete(uploadArgs);
-        }
-
-        /// <summary>
-        /// Writes a log entry for a failed archive operation
-        /// </summary>
-        /// <param name="dsName">Name of dataset</param>
-        /// <param name="reason">Reason for failed operation</param>
-        /// <param name="logToDB">True to log to the database and a local file; false for local file only</param>
-        private void LogOperationFailed(string dsName, string reason = "", bool logToDB = false)
-        {
-            var msg = string.Format("{0} failed, dataset {1}{2}",
-                mArchiveOrUpdate, dsName, string.IsNullOrEmpty(reason) ? string.Empty : "; " + reason);
-
-            if (logToDB)
-            {
-                LogTools.LogError(msg, null, true);
-            }
-            else
-            {
-                OnErrorEvent(msg);
-            }
-        }
-
         /// Verifies that the specified dataset directory exists
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to dataset directory</param>
