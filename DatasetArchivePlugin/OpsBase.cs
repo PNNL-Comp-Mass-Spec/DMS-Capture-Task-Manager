@@ -9,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using CaptureTaskManager;
 using Pacifica.Core;
@@ -173,8 +175,188 @@ namespace DatasetArchivePlugin
                 return false;
             }
 
-            // Got to here, everything's OK, so let the derived class take over
-            return true;
+            // Look for method subdirectories at the same level with identical files
+            // If found, zip the directories with duplicate files
+            // This is required to avoid .tar file length validation errors from MyEMSL
+            return CompressDuplicateMethodDirectories(datasetDirectoryPath);
+        }
+
+        private bool CompressDuplicateMethodDirectories(string datasetDirectoryPath)
+        {
+            var currentTask = "Initializing";
+
+            try
+            {
+                currentTask = "Finding .m directories";
+
+                var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
+
+                var methodDirectories = datasetDirectory.GetDirectories("*.m", SearchOption.AllDirectories);
+
+                if (methodDirectories.Length == 0)
+                    return true;
+
+                var workDir = mMgrParams.GetParam("WorkDir");
+
+                var zipTools = new ZipFileTools(mDebugLevel, workDir);
+                RegisterEvents(zipTools);
+
+                var processedDirectories = new SortedSet<string>();
+
+                currentTask = "Examining .m directories";
+
+                foreach (var methodDirectory in methodDirectories)
+                {
+                    if (processedDirectories.Contains(methodDirectory.FullName))
+                        continue;
+
+                    var methodSubDirectories = methodDirectory.GetDirectories("*.m", SearchOption.TopDirectoryOnly);
+
+                    if (methodSubDirectories.Length < 2)
+                        continue;
+
+                    var sortedDirectories = (from item in methodSubDirectories orderby item.Name select item).ToList();
+
+                    // Keys in this directory are relative file paths, values are FileInfo instances
+                    var baseSubDirectoryFiles = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
+
+                    var baseSubdirectory = sortedDirectories[0];
+
+                    foreach (var file in baseSubdirectory.GetFiles("*.*", SearchOption.AllDirectories))
+                    {
+                        baseSubDirectoryFiles.Add(GetRelativePath(baseSubdirectory, file), file);
+                    }
+
+                    currentTask = "Comparing .m directories";
+
+                    for (var i = 1; i < sortedDirectories.Count; i++)
+                    {
+                        var currentSubdirectory = sortedDirectories[i];
+
+                        var compressSubDirectory = false;
+
+                        foreach (var file in currentSubdirectory.GetFiles("*.*", SearchOption.AllDirectories))
+                        {
+                            var relativePath = GetRelativePath(currentSubdirectory, file);
+
+                            if (!baseSubDirectoryFiles.TryGetValue(relativePath, out var baseFileInfo))
+                            {
+                                continue;
+                            }
+
+                            if (file.Length != baseFileInfo.Length)
+                                continue;
+
+                            LogTools.LogMessage("Compressing directory {0} since file {1} has the same name and size as file {2}",
+                                currentSubdirectory.Name,
+                                relativePath,
+                                GetRelativePath(methodDirectory, baseFileInfo));
+
+                            compressSubDirectory = true;
+                            break;
+                        }
+
+                        if (!compressSubDirectory)
+                        {
+                            continue;
+                        }
+
+                        currentTask = "Copying files from " + currentSubdirectory.Name;
+
+                        var localSubdirectoryPath = Path.Combine(workDir, currentSubdirectory.Name);
+
+                        // Copy the files locally to prevent error "Could not find a part of the path" due to long path lengths
+                        mFileTools.CopyDirectory(currentSubdirectory.FullName, localSubdirectoryPath, true);
+
+                        var zipFilePath = string.Format("{0}.zip", Path.Combine(workDir, currentSubdirectory.Name));
+
+                        currentTask = "Zipping " + localSubdirectoryPath;
+
+                        zipTools.ZipDirectory(localSubdirectoryPath, zipFilePath);
+
+                        currentTask = "Validating " + zipFilePath;
+
+                        // Confirm that the zip file was created and has the correct number of files
+                        var zipFile = new FileInfo(zipFilePath);
+
+                        if (!zipFile.Exists)
+                        {
+                            mErrMsg = string.Format("Zip file not created for directory {0}; aborting {1}", currentSubdirectory.FullName, mArchiveOrUpdate);
+                            LogOperationFailed(mDatasetName, mErrMsg, true);
+                            return false;
+                        }
+
+                        var validZipFile = zipTools.VerifyZipFile(zipFile.FullName);
+
+                        if (!validZipFile)
+                        {
+                            mErrMsg = string.Format("Corrupt zip file created for directory {0}; aborting {1}", currentSubdirectory.FullName, mArchiveOrUpdate);
+                            LogOperationFailed(mDatasetName, mErrMsg, true);
+                            return false;
+                        }
+
+                        currentTask = "Comparing file counts in " + zipFilePath;
+
+                        using (var zipArchive = ZipFile.OpenRead(zipFilePath))
+                        {
+                            var expectedFileCount = currentSubdirectory.GetFiles("*").Length;
+                            var zippedFileCount = zipArchive.Entries.Count;
+
+                            if (zippedFileCount < expectedFileCount)
+                            {
+                                mErrMsg = string.Format("Zip file created for directory {0} only has {1}, but expecting {2}; aborting {3}",
+                                    currentSubdirectory.FullName, zippedFileCount, expectedFileCount, mArchiveOrUpdate);
+
+                                LogOperationFailed(mDatasetName, mErrMsg, true);
+                                return false;
+                            }
+                        }
+
+                        currentTask = string.Format("Copying {0} to {1}", zipFile.Name, currentSubdirectory.FullName);
+
+                        // Copy the zip file to the server
+                        var remoteZipFile = new FileInfo(Path.Combine(currentSubdirectory.FullName, zipFile.Name));
+
+                        mFileTools.CopyFile(zipFile.FullName, remoteZipFile.FullName, true);
+
+                        currentTask = "Deleting files in " + currentSubdirectory.FullName;
+
+                        // Delete the files, then copy the .zip file
+                        foreach (var file in currentSubdirectory.GetFiles("*.*", SearchOption.AllDirectories))
+                        {
+                            if (file.Name.Equals(zipFile.Name))
+                                continue;
+
+                            FileTools.DeleteFile(file.FullName);
+                        }
+
+                        currentTask = "Verifying that remote zip file exists at " + remoteZipFile.FullName;
+
+                        if (!NativeIOFileTools.Exists(remoteZipFile.FullName))
+                        {
+                            // The remote .zip file was deleted; this is unexpected, but we can copy it again
+                            mFileTools.CopyFile(zipFile.FullName, remoteZipFile.FullName, true);
+                        }
+
+                        currentTask = "Deleting local zip file at " + zipFile.FullName;
+
+                        zipFile.Delete();
+
+                        currentTask = "Deleting local files in " + localSubdirectoryPath;
+                        mFileTools.DeleteDirectory(localSubdirectoryPath, true);
+
+                        processedDirectories.Add(currentSubdirectory.FullName);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                mErrMsg = string.Format("Exception in CompressDuplicateMethodDirectories ({0}): {1}; aborting {2}", currentTask, ex.Message, mArchiveOrUpdate);
+                LogOperationFailed(mDatasetName, mErrMsg, true);
+                return false;
+            }
         }
 
         private void CreateArchiveUpdateJobsForDataset(List<string> subdirectoryNames)
@@ -270,6 +452,28 @@ namespace DatasetArchivePlugin
 
             return string.Empty;
         }
+
+        // ReSharper disable SuggestBaseTypeForParameter
+
+        /// <summary>
+        /// Return the relative path of the given file, with relation to the given parent directory (not including the parent directory name)
+        /// </summary>
+        /// <param name="parentDirectory">Parent directory</param>
+        /// <param name="file">File (which should reside either in the parent directory, or in a subdirectory below the parent directory))</param>
+        /// <returns>Relative file path</returns>
+        private static string GetRelativePath(DirectoryInfo parentDirectory, FileInfo file)
+        {
+            if (!file.FullName.StartsWith(parentDirectory.FullName))
+                return file.FullName;
+
+            if (file.FullName.Equals(parentDirectory.FullName))
+                return file.Name;
+
+            return file.FullName.Substring(parentDirectory.FullName.Length + 1);
+        }
+
+        // ReSharper restore SuggestBaseTypeForParameter
+
         /// <summary>
         /// Perform several tasks after the MyEMSL Uploader raises an exception
         /// </summary>
