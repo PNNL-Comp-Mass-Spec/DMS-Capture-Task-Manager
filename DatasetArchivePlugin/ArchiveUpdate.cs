@@ -20,9 +20,9 @@ namespace DatasetArchivePlugin
         // Ignore Spelling: dmsarch
 
         // Obsolete: "No longer used"
-        // string mArchiveSharePath = string.Empty;             // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
+        // string mArchiveSharePath = string.Empty;             // The dataset directory path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
         // string mResultsFolderPathArchive = string.Empty;     // The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
-        // string mResultsFolderPathServer = string.Empty;      // The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string mResultsFolderPathServer = string.Empty;      // The source path of the dataset directory (or dataset job results directory) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
 
         /// <summary>
         /// Constructor
@@ -48,10 +48,10 @@ namespace DatasetArchivePlugin
                 return false;
             }
 
-            var statusMessage = "Updating dataset " + mDatasetName + ", job " + mTaskParams.GetParam("Job");
+            var statusMessage = "Archiving dataset " + mDatasetName + ", job " + mTaskParams.GetParam("Job");
             OnDebugEvent(statusMessage);
 
-            statusMessage = "Pushing dataset folder to MyEMSL";
+            statusMessage = "Pushing dataset directory to MyEMSL";
             OnDebugEvent(statusMessage);
 
             mMostRecentLogTime = DateTime.UtcNow;
