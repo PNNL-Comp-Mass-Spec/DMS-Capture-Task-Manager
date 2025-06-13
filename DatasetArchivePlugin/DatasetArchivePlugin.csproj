@@ -28,7 +28,7 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.8" />
-    <PackageReference Include="PRISM-Library" Version="2.9.6" />
+    <PackageReference Include="PRISM-Library" Version="2.9.12" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CTM_Shared">
