@@ -21,15 +21,15 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.135" />
+    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.142" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.115">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.8" />
-    <PackageReference Include="PRISM-Library" Version="2.9.16" />
-    <PackageReference Include="PRISMWin-Library" Version="1.1.22" />
+    <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.10" />
+    <PackageReference Include="PRISM-Library" Version="2.9.20" />
+    <PackageReference Include="PRISMWin-Library" Version="1.1.23" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
     <PackageReference Include="UIMFLibrary" Version="3.8.29" />

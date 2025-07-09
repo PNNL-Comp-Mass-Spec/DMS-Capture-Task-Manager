@@ -25,10 +25,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PRISM-Library" Version="2.9.16" />
-    <PackageReference Include="PRISMWin-Library" Version="1.1.22" />
+    <PackageReference Include="PRISM-Library" Version="2.9.20" />
+    <PackageReference Include="PRISMWin-Library" Version="1.1.23" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
-    <PackageReference Include="ThermoRawFileReader" Version="4.2.48" />
+    <PackageReference Include="ThermoRawFileReader" Version="4.2.61" />
     <PackageReference Include="UIMFLibrary" Version="3.8.29" />
   </ItemGroup>
   <ItemGroup>
