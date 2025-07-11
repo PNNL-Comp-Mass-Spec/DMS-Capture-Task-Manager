@@ -27,7 +27,7 @@
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.10" />
     <PackageReference Include="PRISM-Library" Version="2.9.20" />
-    <PackageReference Include="ThermoRawFileReader" Version="4.2.61" />
+    <PackageReference Include="ThermoRawFileReader" Version="4.2.63" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CTM_Shared">
