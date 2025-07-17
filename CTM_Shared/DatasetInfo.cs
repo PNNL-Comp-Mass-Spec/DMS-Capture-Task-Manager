@@ -45,6 +45,14 @@ namespace CaptureTaskManager
         public int FileCount => FileList?.Count ?? 0;
 
         /// <summary>
+        /// Files to retrieve, in addition to the primary instrument file
+        /// </summary>
+        /// <remarks>
+        /// For example, realtimesearch.tsv or realtimelibsearch.tsv files
+        /// </remarks>
+        public List<FileInfo> RelatedFiles { get; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
@@ -52,6 +60,7 @@ namespace CaptureTaskManager
         {
             DatasetName = datasetName;
             FileList = new List<FileInfo>();
+            RelatedFiles = new List<FileInfo>();
         }
     }
 

@@ -58,6 +58,8 @@ namespace CaptureToolPlugin.DataCapture
                 fileNames.Add(remoteFile.Name);
             }
 
+            AddRelatedFiles(datasetInfo, fileNames);
+
             CaptureOneOrMoreFiles(out msg, returnData, datasetInfo.DatasetName,
                 fileNames, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
         }

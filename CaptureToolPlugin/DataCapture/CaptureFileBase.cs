@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using CaptureTaskManager;
 
@@ -17,6 +18,22 @@ namespace CaptureToolPlugin.DataCapture
         /// <param name="data">Initialization data object</param>
         protected CaptureFileBase(CaptureInitData data) : base(data)
         { }
+
+        /// <summary>
+        /// Append the filenames of any files in datasetInfo.RelatedFiles
+        /// </summary>
+        /// <remarks>
+        /// The files are assumed to exist in the same directory as the primary instrument file
+        /// </remarks>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="fileNames">Filename list to which new items are appended</param>
+        protected void AddRelatedFiles(DatasetInfo datasetInfo, List<string> fileNames)
+        {
+            if (datasetInfo.RelatedFiles.Count == 0)
+                return;
+
+            fileNames.AddRange(datasetInfo.RelatedFiles.Select(remoteFile => remoteFile.Name));
+        }
 
         /// <summary>
         /// Dataset found, and it's either a single file or multiple files with the same name but different extensions

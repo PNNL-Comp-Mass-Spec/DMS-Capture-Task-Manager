@@ -34,6 +34,9 @@ namespace CaptureToolPlugin.DataCapture
         /// <summary>
         /// Capture a single file
         /// </summary>
+        /// <remarks>
+        /// Will also retrieve files listed in datasetInfo.RelatedFiles, e.g. Dataset_0_realtimelibsearch.tsv
+        /// </remarks>
         /// <param name="msg">Output: error message</param>
         /// <param name="returnData">Input/output: Return data</param>
         /// <param name="datasetInfo">Dataset info</param>
@@ -52,6 +55,8 @@ namespace CaptureToolPlugin.DataCapture
             {
                 datasetInfo.FileOrDirectoryName
             };
+
+            AddRelatedFiles(datasetInfo, fileNames);
 
             CaptureOneOrMoreFiles(out msg, returnData, datasetInfo.DatasetName,
                 fileNames, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);

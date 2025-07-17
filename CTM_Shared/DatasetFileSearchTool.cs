@@ -279,6 +279,24 @@ namespace CaptureTaskManager
                     {
                         datasetInfo.FileOrDirectoryName = datasetInfo.FileList[0].Name;
                         datasetInfo.DatasetType = InstrumentFileLayout.File;
+
+                        // Look for special use-case files related to the dataset file, in particular, realtime search .tsv files
+
+                        var realTimeSearchFiles = sourceDirectory.GetFiles(
+                            string.Format("{0}_*_realtimesearch.tsv", Path.GetFileNameWithoutExtension(datasetInfo.FileOrDirectoryName)));
+
+                        var realTimeLibSearchFiles = sourceDirectory.GetFiles(
+                            string.Format("{0}_*_realtimelibsearch.tsv", Path.GetFileNameWithoutExtension(datasetInfo.FileOrDirectoryName)));
+
+                        if (realTimeSearchFiles.Length > 0 || realTimeLibSearchFiles.Length > 0)
+                        {
+                            datasetInfo.RelatedFiles.AddRange(realTimeSearchFiles);
+                            datasetInfo.RelatedFiles.AddRange(realTimeLibSearchFiles);
+
+                            var fileNames = datasetInfo.RelatedFiles.ConvertAll(file => file.Name);
+                            OnStatusEvent("Dataset has realtime search files in directory {0}: {1}",
+                                sourceDirectory.FullName, string.Join(", ", fileNames.Take(5)));
+                        }
                     }
                     else
                     {
