@@ -223,10 +223,10 @@ namespace CaptureTaskManager
             var lookForDatasetFile = checkForFilesFirst;
 
             // If lookForDatasetFile is true, the following logic is followed:
-            // When i is 1, search for remote files
-            // When i is 2, search for remote files, but replace spaces with underscores
-            // When i is 3, search for remote directories
-            // When i is 4, search for remote directories, but replace spaces with underscores
+            // When i=1, search for remote files
+            // When i=2, search for remote files, but replace spaces with underscores
+            // When i=3, search for remote directories
+            // When i=4, search for remote directories, but replace spaces with underscores
 
             // If lookForDatasetFile is false, we first look for directories
 
@@ -395,6 +395,8 @@ namespace CaptureTaskManager
 
             return updatedText;
         }
+
+        // ReSharper disable once GrammarMistakeInComment
 
         /// <summary>
         /// If captureSubdirectory starts with "..", possibly update sourcePath and captureSubdirectory to account for an alternate share name
