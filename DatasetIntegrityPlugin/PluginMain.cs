@@ -214,7 +214,14 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.BrukerMALDI_Imaging_V2:
-                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectoryPath, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
+
+                    var requireSerFile = instrumentName switch
+                    {
+                        "12T_FTICR_P_Imaging" => false,
+                        _ => true
+                    };
+
+                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectoryPath, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: requireSerFile, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
                 case InstrumentClass.BrukerTOF_TDF:
