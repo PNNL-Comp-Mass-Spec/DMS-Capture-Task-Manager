@@ -44,8 +44,10 @@ public enum DataFormat
     /// </summary>
     ZippedSFolders = 8,
 
+    // ReSharper disable once GrammarMistakeInComment
+
     /// <summary>
-    /// .D directory has a analysis.baf file
+    /// .D directory has an analysis.baf file
     /// There is also .m subdirectory that has a apexAcquisition.method file
     /// </summary>
     BrukerFTFolder = 9,
@@ -56,7 +58,7 @@ public enum DataFormat
     BrukerMALDISpot = 10,
 
     /// <summary>
-    /// Directory with .jpg files and .D subdirectories
+    /// Directory with .jpg files and .d subdirectories
     /// </summary>
     BrukerMALDIImaging = 11,
 
@@ -64,6 +66,8 @@ public enum DataFormat
     /// Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
     /// </summary>
     BrukerTOFBaf = 12,
+
+    // ReSharper disable once GrammarMistakeInComment
 
     /// <summary>
     /// Used by Maxis01; Inside the .D directory is the analysis.baf file

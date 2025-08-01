@@ -570,6 +570,7 @@ namespace DatasetIntegrityPlugin
             {
                 var xml = new StringBuilder();
 
+                // ReSharper disable RedundantVerbatimStringPrefix
                 xml.Append(@"<?xml version=""1.0"" encoding=""utf-8""?>");
                 xml.Append(@"<BatchProcessJob>");
                 xml.Append(@"<Header></Header>");
@@ -585,7 +586,7 @@ namespace DatasetIntegrityPlugin
                 xml.Append(@"<!--Write each processed chromatogram to the given output formats.-->");
                 xml.Append(@"<OutputEntries>");
 
-                // ReSharper disable once StringLiteralTypo
+                // ReSharper disable once UseRawString
                 xml.Append(@"<OutputEntry converterId=""net.openchrom.msd.converter.supplier.cdf"">");
                 xml.Append(@"<![CDATA[" + mWorkDir + "]]>");
                 xml.Append(@"</OutputEntry>");
@@ -594,6 +595,8 @@ namespace DatasetIntegrityPlugin
                 xml.Append(@"<!--Process each chromatogram with the listed report suppliers.-->");
                 xml.Append(@"<ReportEntries></ReportEntries>");
                 xml.Append(@"</BatchProcessJob>");
+
+                // ReSharper restore RedundantVerbatimStringPrefix
 
                 var jobFilePath = Path.Combine(mWorkDir, "CDFBatchJob.obj");
 
@@ -809,10 +812,10 @@ namespace DatasetIntegrityPlugin
 
         /// <summary>
         /// Looks files matching fileSpec
-        /// For matching files, copies the or moves them up one directory
+        /// For matching files, copies them or moves them up one directory
         /// If matchDatasetName is true then requires that the file start with the name of the dataset
         /// </summary>
-        /// <param name="datasetDirectory"></param>
+        /// <param name="datasetDirectory">Dataset directory</param>
         /// <param name="fileSpec">Files to match, for example *.mis</param>
         /// <param name="matchDatasetName">True if file names must start with mDataset</param>
         /// <param name="copyFile">True to copy the file, false to move it</param>
@@ -1163,7 +1166,7 @@ namespace DatasetIntegrityPlugin
         }
 
         /// <summary>
-        /// Tests a Agilent_TOF_V2 directory for integrity
+        /// Tests an Agilent_TOF_V2 directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <param name="requireMethodDirectory">When true, require that a .m subdirectory exists</param>
@@ -1834,8 +1837,8 @@ namespace DatasetIntegrityPlugin
         /// <param name="requireBafOrSerFile">Set to True to require that the analysis.baf or ser file be present</param>
         /// <param name="requireMCFFile">Set to True to require that the .mcf file be present</param>
         /// <param name="requireSerFile">Set to True to require that the ser file be present</param>
-        /// <param name="instrumentClass"></param>
-        /// <param name="instrumentName"></param>
+        /// <param name="instrumentClass">Instrument class</param>
+        /// <param name="instrumentName">Instrument name</param>
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerFT_Directory(
             string datasetDirectoryPath,
@@ -1930,7 +1933,7 @@ namespace DatasetIntegrityPlugin
                 }
                 else if (dotDDirectories.Count == 2)
                 {
-                    // If one directory contains a ser file and the other directory contains an analysis.baf, we'll allow this
+                    // If one directory contains a ser file and the other directory contains an analysis.baf, we'll allow this case
                     // This is sometimes the case for 15T_FTICR_Imaging
                     var serCount = 0;
                     var bafCount = 0;
@@ -2633,7 +2636,11 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
+            // ReSharper disable StringLiteralTypo
+
+            // ReSharper disable CommentTypo
             // Verify that at least one _CHRO000.DAT or _CHRO001.DAT file exists
+            // ReSharper restore CommentTypo
             var datFiles = PathUtils.FindFilesWildcard(dotRawDirectories[0], "_CHRO*.DAT").ToList();
 
             var fileExists = datFiles.Count > 0;
@@ -2645,6 +2652,8 @@ namespace DatasetIntegrityPlugin
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED; // Report a 'skipped' code, rather than just failing
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
+
+            // ReSharper restore StringLiteralTypo
 
             // Verify the size of the .dat file(s)
             var largestDatFileKB = GetLargestFileSizeKB(datFiles);

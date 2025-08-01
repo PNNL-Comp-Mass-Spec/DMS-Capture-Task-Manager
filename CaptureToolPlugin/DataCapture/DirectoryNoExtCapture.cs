@@ -106,7 +106,7 @@ namespace CaptureToolPlugin.DataCapture
 
                 if (!allowMultipleDirectories && instrumentClass is InstrumentClass.BrukerMALDI_Imaging_V2 or InstrumentClass.TimsTOF_MALDI_Imaging)
                 {
-                    // Bruker Imaging datasets can have multiple .d subdirectories; they typically each have their own ser file
+                    // Bruker Imaging datasets can have multiple .d subdirectories; they typically each have their own ser file or fid file
                     // timsTOF Imaging datasets can have multiple .d subdirectories (though this is not always the case)
                     allowMultipleDirectories = true;
                 }
