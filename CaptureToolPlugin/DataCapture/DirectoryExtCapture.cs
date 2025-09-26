@@ -421,7 +421,7 @@ namespace CaptureToolPlugin.DataCapture
             return false;
         }
 
-        private void DeleteZeroByteBrukerFiles(DirectoryInfo targetDirectory)
+        private static void DeleteZeroByteBrukerFiles(DirectoryInfo targetDirectory)
         {
             try
             {

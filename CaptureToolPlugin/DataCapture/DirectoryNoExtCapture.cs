@@ -250,7 +250,8 @@ namespace CaptureToolPlugin.DataCapture
             }
         }
 
-        private bool FragmentationProfileFileIsDefault(FileSystemInfo fragProfileFile)
+        // ReSharper disable once SuggestBaseTypeForParameter
+        private static bool FragmentationProfileFileIsDefault(FileInfo fragProfileFile)
         {
             try
             {

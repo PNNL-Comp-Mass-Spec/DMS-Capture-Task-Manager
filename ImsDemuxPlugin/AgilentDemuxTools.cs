@@ -831,7 +831,7 @@ namespace ImsDemuxPlugin
             return false;
         }
 
-        private DateTime GetDemultiplexingFinishedFromLog(string dotDPath, out string message)
+        private static DateTime GetDemultiplexingFinishedFromLog(string dotDPath, out string message)
         {
             message = string.Empty;
 

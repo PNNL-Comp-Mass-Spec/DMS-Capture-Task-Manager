@@ -260,7 +260,7 @@ namespace CaptureToolPlugin.DataCapture
         /// Delete zero-byte .sqlite-journal files in the target directory
         /// </summary>
         /// <param name="directoryPath">Target directory path</param>
-        private void DeleteSqliteJournalFiles(string directoryPath)
+        private static void DeleteSqliteJournalFiles(string directoryPath)
         {
             try
             {
