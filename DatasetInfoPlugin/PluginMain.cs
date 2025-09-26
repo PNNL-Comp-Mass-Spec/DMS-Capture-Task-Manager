@@ -365,6 +365,8 @@ namespace DatasetInfoPlugin
 
                 var datasetFile = new FileInfo(remoteFileOrDirectoryPath);
 
+                string instrumentFileOrDirectoryDescription;
+
                 if (datasetFile.Exists && datasetFile.Extension.Equals(InstrumentClassInfo.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
                     LogMessage("Copying instrument file to local disk: " + datasetFile.FullName, false, false);
@@ -372,8 +374,8 @@ namespace DatasetInfoPlugin
                     ResetTimestampForQueueWaitTimeLogging();
 
                     // Thermo .raw file; copy it locally
-                    var localFilePath = Path.Combine(mWorkDir, datasetFileOrDirectory);
-                    var fileCopied = mFileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
+                    var localFile = new FileInfo(Path.Combine(mWorkDir, datasetFileOrDirectory));
+                    var fileCopied = mFileTools.CopyFileUsingLocks(datasetFile, localFile.FullName, true);
 
                     if (!fileCopied)
                     {
@@ -382,7 +384,9 @@ namespace DatasetInfoPlugin
                         return returnData;
                     }
 
-                    pathToProcess = localFilePath;
+                    instrumentFileOrDirectoryDescription = string.Format("{0:N0} KB .raw file", localFile.Length / 1024.0);
+
+                    pathToProcess = localFile.FullName;
                     fileCopiedLocally = true;
                     directoryCopiedLocally = false;
                     localDirectoryPath = string.Empty;
@@ -422,6 +426,9 @@ namespace DatasetInfoPlugin
                         fileCopiedLocally = false;
                         directoryCopiedLocally = true;
                     }
+
+                    var directorySizeKB = GetDirectorySizeKB(pathToProcess);
+                    instrumentFileOrDirectoryDescription = string.Format("{0:N0} KB .D directory", directorySizeKB);
                 }
                 else if (instrumentClass == InstrumentClass.BrukerTOF_TDF)
                 {
@@ -439,6 +446,9 @@ namespace DatasetInfoPlugin
 
                     fileCopiedLocally = false;
                     directoryCopiedLocally = true;
+
+                    var directorySizeKB = GetDirectorySizeKB(pathToProcess);
+                    instrumentFileOrDirectoryDescription = string.Format("{0:N0} KB .D directory", directorySizeKB);
                 }
                 else
                 {
@@ -446,6 +456,23 @@ namespace DatasetInfoPlugin
                     fileCopiedLocally = false;
                     directoryCopiedLocally = false;
                     localDirectoryPath = string.Empty;
+
+                    var remoteFile = new FileInfo(remoteFileOrDirectoryPath);
+                    var remoteDirectory = new DirectoryInfo(remoteFileOrDirectoryPath);
+
+                    if (remoteFile.Exists)
+                    {
+                        instrumentFileOrDirectoryDescription = string.Format("{0:N0} KB {1} file", remoteFile.Length / 1024.0, remoteFile.Extension);
+                    }
+                    else if (remoteDirectory.Exists)
+                    {
+                        var directorySizeKB = GetDirectorySizeKB(remoteDirectory.FullName);
+                        instrumentFileOrDirectoryDescription = string.Format("{0:N0} KB directory", directorySizeKB);
+                    }
+                    else
+                    {
+                        instrumentFileOrDirectoryDescription = "?? KB file or directory";
+                    }
                 }
 
                 var currentOutputDirectory = ConstructOutputDirectoryPath(
@@ -589,7 +616,7 @@ namespace DatasetInfoPlugin
 
                     if (cmdRunner.ExitCode <= 0)
                     {
-                        returnData.CloseoutMsg = "Error running MsFileInfoScanner";
+                        returnData.CloseoutMsg = string.Format("Error running MsFileInfoScanner on a {0}", instrumentFileOrDirectoryDescription);
                         LogError(returnData.CloseoutMsg);
 
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -667,7 +694,7 @@ namespace DatasetInfoPlugin
                     }
                     else
                     {
-                        mMsg = "Error running MSFileInfoScanner: Dataset has no spectra (ScanCount = 0)";
+                        mMsg = string.Format("Error running MsFileInfoScanner on a {0}: Dataset has no spectra (ScanCount = 0)", instrumentFileOrDirectoryDescription);
                         LogError(mMsg);
                         successProcessing = false;
                     }
@@ -704,7 +731,7 @@ namespace DatasetInfoPlugin
                 }
                 else if (successProcessing && qcPlotMode == QCPlottingModes.AllPlots)
                 {
-                    validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, returnData);
+                    validQcGraphics = ValidateQCGraphics(instrumentFileOrDirectoryDescription, currentOutputDirectory, primaryFileOrDirectoryProcessed, returnData);
 
                     if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
@@ -739,8 +766,8 @@ namespace DatasetInfoPlugin
 
                 if (mProcessingStatus.ErrorCountLoadDataForScan > 0)
                 {
-                    returnData.EvalMsg = AppendToComment(
-                        returnData.EvalMsg, "Corrupt spectra found; inspect QC plots to decide if errors can be ignored");
+                    var msg = string.Format("Corrupt spectra found for a {0}; examine QC plots to decide if errors can be ignored", instrumentFileOrDirectoryDescription);
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, msg);
                 }
 
                 // Either a non-zero error code was returned, or an error event was received
@@ -753,23 +780,21 @@ namespace DatasetInfoPlugin
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
                     // In particular, small datasets (lasting just a few seconds) don't work
 
+                    var msg = string.Format("MSFileInfoScanner error for {0}, data type {1}, instrument class {2}", instrumentFileOrDirectoryDescription, rawDataTypeName, instClass);
                     returnData.CloseoutMsg = string.Empty;
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                    returnData.EvalMsg = AppendToComment(
-                        returnData.EvalMsg,
-                        string.Format("MSFileInfoScanner error for data type {0}, instrument class {1}", rawDataTypeName, instClass));
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, msg);
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     return returnData;
                 }
                 // ReSharper restore HeuristicUnreachableCode
 
-                if (primaryFileOrDirectoryProcessed || mTotalDatasetFilesOrDirectories > 1 && mCurrentDatasetNumber < mTotalDatasetFilesOrDirectories)
+                if (primaryFileOrDirectoryProcessed || (mTotalDatasetFilesOrDirectories > 1 && mCurrentDatasetNumber < mTotalDatasetFilesOrDirectories))
                 {
                     // MSFileInfoScanner already processed the primary file or directory
                     // Mention this failure in the EvalMsg but still return success
-                    returnData.EvalMsg = AppendToComment(
-                        returnData.EvalMsg,
-                        "ProcessMSFileOrFolder returned false for " + datasetFileOrDirectory);
+                    var msg = string.Format("ProcessMSFileOrFolder returned false for a {0}: {1}", instrumentFileOrDirectoryDescription, datasetFileOrDirectory);
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, msg);
                 }
                 else
                 {
@@ -777,9 +802,12 @@ namespace DatasetInfoPlugin
                     {
                         if (string.IsNullOrEmpty(mMsg))
                         {
-                            mMsg = "ProcessMSFileOrFolder returned false. Message = " +
-                                   mProcessingStatus.ErrorMessage +
-                                   " returnData code = " + (int)errorCodeToUse;
+                            mMsg = string.Format("ProcessMSFileOrFolder returned false for a {0}; error code = {1}", instrumentFileOrDirectoryDescription, (int)errorCodeToUse);
+
+                            if (!string.IsNullOrWhiteSpace(mProcessingStatus.ErrorMessage))
+                            {
+                                mMsg = string.Format("{0}; ErrorMessage = {1}", mMsg, mProcessingStatus.ErrorMessage);
+                            }
                         }
 
                         LogError(mMsg);
@@ -904,9 +932,12 @@ namespace DatasetInfoPlugin
             {
                 if (string.IsNullOrEmpty(mMsg))
                 {
-                    mMsg = "ProcessMSFileOrFolder returned false. Message = " +
-                           mProcessingStatus.ErrorMessage +
-                           " returnData code = " + (int)errorCodeToReturn;
+                    mMsg = string.Format("ProcessMSFileOrFolder returned false; error code = {0}", (int)errorCodeToReturn);
+
+                    if (!string.IsNullOrWhiteSpace(mProcessingStatus.ErrorMessage))
+                    {
+                        mMsg = string.Format("{0}; ErrorMessage = {1}", mMsg, mProcessingStatus.ErrorMessage);
+                    }
                 }
 
                 LogError(mMsg);
@@ -1503,6 +1534,25 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
+        /// Determine the total size of a directory and any subdirectories
+        /// </summary>
+        /// <param name="directoryPath">Directory path</param>
+        /// <returns>Total size, in kilobytes</returns>
+        private static double GetDirectorySizeKB(string directoryPath)
+        {
+            var directoryInfo = new DirectoryInfo(directoryPath);
+
+            long totalSizeBytes = 0;
+
+            foreach (var file in directoryInfo.GetFiles("*", SearchOption.AllDirectories))
+            {
+                totalSizeBytes += file.Length;
+            }
+
+            return totalSizeBytes / 1024.0;
+        }
+
+        /// <summary>
         /// Construct the full path to the MSFileInfoScanner.exe
         /// </summary>
         private string GetMSFileInfoScannerExePath()
@@ -2075,7 +2125,11 @@ namespace DatasetInfoPlugin
             }
         }
 
-        private static bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, ToolReturnData returnData)
+        private static bool ValidateQCGraphics(
+            string instrumentFileOrDirectoryDescription,
+            string currentOutputDirectory,
+            bool primaryFileOrDirectoryProcessed,
+            ToolReturnData returnData)
         {
             // Make sure at least one of the PNG files created by MSFileInfoScanner is over 10 KB in size
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);
@@ -2101,7 +2155,7 @@ namespace DatasetInfoPlugin
 
             if (pngFiles.Length == 0)
             {
-                const string errMsg = "No PNG files were created";
+                var errMsg = string.Format("No PNG files were created for a {0}", instrumentFileOrDirectoryDescription);
 
                 if (primaryFileOrDirectoryProcessed)
                 {
@@ -2134,7 +2188,9 @@ namespace DatasetInfoPlugin
                 return true;
             }
 
-            var errMsg2 = string.Format("All {0} PNG files created by MSFileInfoScanner are less than {1} KB and likely blank graphics", pngFiles.Length, minimumGraphicsSizeKB);
+            var errMsg2 = string.Format(
+                "All {0} PNG files created by MSFileInfoScanner are less than {1} KB and likely blank graphics; {2}",
+                pngFiles.Length, minimumGraphicsSizeKB, instrumentFileOrDirectoryDescription);
 
             if (primaryFileOrDirectoryProcessed)
             {
