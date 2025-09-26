@@ -27,7 +27,7 @@ namespace DatasetArchivePlugin
     /// </summary>
     internal abstract class OpsBase : EventNotifier
     {
-        // Ignore Spelling: MyEMSLUploader, Unsubscribe
+        // Ignore Spelling: MyEMSLUploader, recurse, Unsubscribe
 
         private const string ARCHIVE = "Archive";
 

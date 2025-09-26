@@ -12,7 +12,7 @@ namespace CaptureToolPlugin.DataCapture
     /// </summary>
     internal abstract class CaptureDirectoryBase : CaptureBase
     {
-        // Ignore Spelling: bionet, Bruker, mcf, ser, uimf
+        // Ignore Spelling: bionet, Bruker, mcf, recurse, ser, uimf
 
         /// <summary>
         /// Constructor
