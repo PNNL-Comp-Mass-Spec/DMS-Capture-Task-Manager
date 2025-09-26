@@ -36,7 +36,7 @@ namespace CaptureToolPlugin.DataCapture
             {
                 if (item.Key == '.')
                 {
-                    foreach (var candidateFile in datasetDirectory.GetFileSystemInfos("*.*", SearchOption.AllDirectories))
+                    foreach (var candidateFile in datasetDirectory.GetFileSystemInfos("*", SearchOption.AllDirectories))
                     {
                         if (Path.GetFileNameWithoutExtension(candidateFile.Name).IndexOf('.') >= 0)
                         {

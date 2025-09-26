@@ -611,7 +611,7 @@ namespace ImsDemuxPlugin
 
                 var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-                foreach (var item in targetDirectory.GetFileSystemInfos("*.*", searchOption))
+                foreach (var item in targetDirectory.GetFileSystemInfos("*", searchOption))
                 {
                     if ((item.Attributes & FileAttributes.ReadOnly) != FileAttributes.ReadOnly)
                     {

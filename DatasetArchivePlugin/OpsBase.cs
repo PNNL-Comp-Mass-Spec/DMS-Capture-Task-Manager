@@ -222,7 +222,7 @@ namespace DatasetArchivePlugin
 
                     var baseSubdirectory = sortedDirectories[0];
 
-                    foreach (var file in baseSubdirectory.GetFiles("*.*", SearchOption.AllDirectories))
+                    foreach (var file in baseSubdirectory.GetFiles("*", SearchOption.AllDirectories))
                     {
                         baseSubDirectoryFiles.Add(GetRelativePath(baseSubdirectory, file), file);
                     }
@@ -235,7 +235,7 @@ namespace DatasetArchivePlugin
 
                         var compressSubDirectory = false;
 
-                        foreach (var file in currentSubdirectory.GetFiles("*.*", SearchOption.AllDirectories))
+                        foreach (var file in currentSubdirectory.GetFiles("*", SearchOption.AllDirectories))
                         {
                             var relativePath = GetRelativePath(currentSubdirectory, file);
 
@@ -322,7 +322,7 @@ namespace DatasetArchivePlugin
                         currentTask = "Deleting files in " + currentSubdirectory.FullName;
 
                         // Delete the files, then copy the .zip file
-                        foreach (var file in currentSubdirectory.GetFiles("*.*", SearchOption.AllDirectories))
+                        foreach (var file in currentSubdirectory.GetFiles("*", SearchOption.AllDirectories))
                         {
                             if (file.Name.Equals(zipFile.Name))
                                 continue;
