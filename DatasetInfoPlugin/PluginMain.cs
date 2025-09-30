@@ -405,10 +405,12 @@ namespace DatasetInfoPlugin
                     var remoteDirectory = new DirectoryInfo(Path.Combine(datasetDirectoryPath, Path.GetDirectoryName(datasetFileOrDirectory)));
 
                     var sqliteFile = new FileInfo(Path.Combine(remoteDirectory.FullName, "chromatography-data.sqlite"));
+                    string pathForSize;
 
                     if (!sqliteFile.Exists)
                     {
                         pathToProcess = remoteFileOrDirectoryPath;
+                        pathForSize = pathToProcess;
                         fileCopiedLocally = false;
                         directoryCopiedLocally = false;
                         localDirectoryPath = string.Empty;
@@ -417,6 +419,7 @@ namespace DatasetInfoPlugin
                     {
                         localDirectoryPath = Path.Combine(mWorkDir, remoteDirectory.Name);
                         pathToProcess = Path.Combine(mWorkDir, datasetFileOrDirectory);
+                        pathForSize = localDirectoryPath;
 
                         if (!CopyRemoteDirectoryToLocal(remoteDirectory, localDirectoryPath, returnData))
                         {
@@ -427,7 +430,7 @@ namespace DatasetInfoPlugin
                         directoryCopiedLocally = true;
                     }
 
-                    var directorySizeKB = GetDirectorySizeKB(pathToProcess);
+                    var directorySizeKB = GetDirectorySizeKB(pathForSize);
                     instrumentFileOrDirectoryDescription = string.Format("{0:N0} KB .D directory", directorySizeKB);
                 }
                 else if (instrumentClass == InstrumentClass.BrukerTOF_TDF)
@@ -1541,10 +1544,15 @@ namespace DatasetInfoPlugin
         private static double GetDirectorySizeKB(string directoryPath)
         {
             var directoryInfo = new DirectoryInfo(directoryPath);
+            if (!directoryInfo.Exists)
+            {
+                LogMessage($"Cannot determine directory size on a file, path '{directoryPath}'");
+                return -1;
+            }
 
             long totalSizeBytes = 0;
 
-            foreach (var file in directoryInfo.GetFiles("*", SearchOption.AllDirectories))
+            foreach (var file in directoryInfo.EnumerateFiles("*", SearchOption.AllDirectories))
             {
                 totalSizeBytes += file.Length;
             }
