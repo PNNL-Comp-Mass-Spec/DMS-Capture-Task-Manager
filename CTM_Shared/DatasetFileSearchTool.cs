@@ -305,6 +305,41 @@ namespace CaptureTaskManager
                         var fileNames = foundFiles.ConvertAll(file => file.Name);
                         OnWarningEvent("Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
                             i, sourceDirectory.FullName, string.Join(", ", fileNames.Take(5)));
+
+                        // On the timsTOFFlex02, there could be a .d directory and similarly named .run and .run.index files (e.g. https://dms2.pnl.gov/dataset/show/2025_10_17_0001)
+                        // When this is the case, match the .d directory
+                        var runOrRunIndexFile = 0;
+
+                        foreach (var file in foundFiles)
+                        {
+                            if (file.Extension.Equals(".run", StringComparison.InvariantCultureIgnoreCase) ||
+                                file.Name.EndsWith(".run.index", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                runOrRunIndexFile++;
+                            }
+                        }
+
+                        if (runOrRunIndexFile >= 2)
+                        {
+                            // Look for a .d directory
+                            var matchingDirectories = sourceDirectory.GetDirectories(datasetName + ".d");
+
+                            if (matchingDirectories.Length == 1)
+                            {
+                                datasetInfo.FileOrDirectoryName = matchingDirectories[0].Name;
+                                datasetInfo.DatasetType = InstrumentFileLayout.DirectoryExt;
+                            }
+
+                            if (mTraceMode)
+                            {
+                                ToolRunnerBase.ShowTraceMessage("Matched directory {0}; DatasetType = {1}; Ignored match two similarly named .run and .run.index files",
+                                    datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString());
+                            }
+
+
+                            matchedDirectory = true;
+                            return datasetInfo;
+                        }
                     }
 
                     if (mTraceMode)

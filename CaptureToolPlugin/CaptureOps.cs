@@ -1080,7 +1080,13 @@ namespace CaptureToolPlugin
         /// <param name="sourceDirectoryPath">The determined path for the file/directory that should be copied</param>
         /// <param name="datasetInfo">Details on the files to be copied</param>
         /// <returns>False if error, and processing should exit.  returnData includes addition details on errors</returns>
-        public bool CheckSourceFiles(ITaskParams taskParams, ToolReturnData returnData, string datasetName, InstrumentClass instrumentClass, out string sourceDirectoryPath, out DatasetInfo datasetInfo)
+        public bool CheckSourceFiles(
+            ITaskParams taskParams,
+            ToolReturnData returnData,
+            string datasetName,
+            InstrumentClass instrumentClass,
+            out string sourceDirectoryPath,
+            out DatasetInfo datasetInfo)
         {
             var jobNum = taskParams.GetParam("Job", 0);
 
@@ -1653,6 +1659,7 @@ namespace CaptureToolPlugin
                     if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryExt)
                     {
                         // Dataset name matched a file; must be a .d directory
+                        // Dataset name matched multiple files; must be a .d directory
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .d directory";
                     }
                     break;
