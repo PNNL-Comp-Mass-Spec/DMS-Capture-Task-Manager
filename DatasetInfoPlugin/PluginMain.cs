@@ -503,7 +503,7 @@ namespace DatasetInfoPlugin
                 var argumentList = new List<string>
                 {
                     string.Format("/I:{0}", PathUtils.PossiblyQuotePath(pathToProcess)),
-                    string.Format("/O:{0}", currentOutputDirectory),
+                    string.Format("/O:{0}", PathUtils.PossiblyQuotePath(currentOutputDirectory)),
                     string.Format("/SF:{0}", mStatusFilePath)
                 };
 
