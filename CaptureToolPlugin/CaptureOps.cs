@@ -1573,16 +1573,19 @@ namespace CaptureToolPlugin
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath));
                             var foundFiles = sourceDirectory.GetFiles(datasetInfo.FileOrDirectoryName + ".*").ToList();
 
-                            if (foundFiles.Count == 2)
+                            if (foundFiles.Count is 2 or 3)
                             {
                                 // On the 21T each .raw file can have a corresponding .tsv file
                                 // Allow for this during capture
 
-                                // Also, on Thermo instruments, there might be a sequence file (extension .sld) with the same name as the .raw file; ignore it
+                                // On Thermo instruments, there might be a sequence file (extension .sld) with the same name as the .raw file; ignore it
+
+                                // On Orbitrap IQ-X instruments, there might be .cdResult and .cdResultView files with the same name as the .raw file
 
                                 var rawFound = false;
                                 var tsvFound = false;
                                 var sldFound = false;
+                                var cdResultFound = false;
 
                                 foreach (var file in foundFiles)
                                 {
@@ -1599,6 +1602,12 @@ namespace CaptureToolPlugin
                                     if (string.Equals(Path.GetExtension(file.Name), ".sld", StringComparison.OrdinalIgnoreCase))
                                     {
                                         sldFound = true;
+                                    }
+
+                                    if (string.Equals(Path.GetExtension(file.Name), ".cdResult", StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(Path.GetExtension(file.Name), ".cdResultView", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        cdResultFound = true;
                                     }
                                 }
 
@@ -1617,6 +1626,12 @@ namespace CaptureToolPlugin
 
                                     datasetInfo.FileList.Clear();
                                     datasetInfo.FileList.Add(new FileInfo(Path.Combine(sourceDirectoryPath, datasetInfo.FileOrDirectoryName)));
+                                    break;
+                                }
+
+                                if (rawFound && cdResultFound)
+                                {
+                                    LogMessage("Capturing a .raw file with a corresponding .cdResult file");
                                     break;
                                 }
                             }
@@ -1746,7 +1761,7 @@ namespace CaptureToolPlugin
 
             if (string.IsNullOrEmpty(returnData.CloseoutMsg))
             {
-                // We are capturing the right item for the instrument class of this dataset
+                // We are capturing the right item (or items) for the instrument class of this dataset
                 return true;
             }
 
