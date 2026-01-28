@@ -21,7 +21,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.115">
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -29,7 +29,7 @@
     <PackageReference Include="PRISMWin-Library" Version="1.1.23" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
     <PackageReference Include="ThermoRawFileReader" Version="4.2.63" />
-    <PackageReference Include="UIMFLibrary" Version="3.8.29" />
+    <PackageReference Include="UIMFLibrary" Version="3.8.30" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CTM_Shared">

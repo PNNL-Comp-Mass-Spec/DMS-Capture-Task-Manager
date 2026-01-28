@@ -41,19 +41,19 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Apache.NMS.ActiveMQ" Version="2.1.1" />
+    <PackageReference Include="Apache.NMS.ActiveMQ" Version="2.2.0" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.115">
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.10" />
     <PackageReference Include="PRISM-Library" Version="2.9.20" />
     <PackageReference Include="PRISMWin-Library" Version="1.1.23" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
     <PackageReference Include="ThermoRawFileReader" Version="4.2.63" />
-    <PackageReference Include="UIMFLibrary" Version="3.8.29" />
+    <PackageReference Include="UIMFLibrary" Version="3.8.30" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj" />
@@ -81,6 +81,7 @@
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot;" />
     <Exec Command="xcopy &quot;$(TargetDir)*.deps.json&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)runtimes&quot;    &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; /S /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)CaptureTaskManager.runtimeconfig.json&quot;   &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
   </Target>
   <!-- Tasks to complete after doing a clean, to clear out the contents of DeployedFiles and thereby remove old or incorrect dlls. -->
   <Target Name="PostClean" AfterTargets="Clean">
