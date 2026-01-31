@@ -43,7 +43,7 @@ namespace DatasetIntegrityPlugin
         private const float TDF_FILE_MIN_SIZE_KB = 50;
         private const float TDF_BIN_FILE_MIN_SIZE_KB = 50;
         private const float TSF_FILE_MIN_SIZE_KB = 16;
-        private const float TSF_BIN_FILE_MIN_SIZE_KB = 16;
+        private const float TSF_BIN_FILE_MIN_SIZE_KB = 3;
         private const float SER_FILE_MIN_SIZE_KB = 16;
         private const float FID_FILE_MIN_SIZE_KB = 16;
         private const float ACQ_METHOD_FILE_MIN_SIZE_KB = 5;
