@@ -94,6 +94,11 @@
             Dataset has not spectra
             </summary>
         </member>
+        <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.NaturalOrganicMatterStatsError">
+            <summary>
+            Error computing natural organic matter stats
+            </summary>
+        </member>
         <member name="F:MSFileInfoScannerInterfaces.iMSFileInfoScanner.MSFileScannerErrorCodes.UnspecifiedError">
             <summary>
             Unspecified error
@@ -161,7 +166,7 @@
         </member>
         <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.DatasetInfoXML">
             <summary>
-            Returns the dataset info, formatted as XML
+            Dataset info, formatted as XML
             </summary>
         </member>
         <member name="P:MSFileInfoScannerInterfaces.iMSFileInfoScanner.ErrorCode">
@@ -230,7 +235,7 @@
             </summary>
             <param name="datasetName">Dataset name</param>
             <param name="connectionString">Database connection string</param>
-            <param name="storedProcedureName">Stored procedure</param>
+            <param name="procedureName">Procedure name</param>
             <returns>True if success; false if failure</returns>
         </member>
         <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String,System.String,System.String)">
@@ -240,7 +245,7 @@
             <param name="datasetName">Dataset name</param>
             <param name="dsInfoXML">Database info XML</param>
             <param name="connectionString">Database connection string</param>
-            <param name="storedProcedureName">Stored procedure</param>
+            <param name="procedureName">Procedure name</param>
             <returns>True if success; false if failure</returns>
         </member>
         <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String)">
@@ -250,7 +255,7 @@
             </summary>
             <param name="datasetID">Dataset ID to send to the stored procedure</param>
             <param name="connectionString">Database connection string</param>
-            <param name="storedProcedureName">Stored procedure</param>
+            <param name="procedureName">Procedure name</param>
             <returns>True if success; false if failure</returns>
         </member>
         <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String,System.String)">
@@ -261,7 +266,7 @@
             <param name="datasetID">Dataset ID to send to the stored procedure</param>
             <param name="dsInfoXML">Database info XML</param>
             <param name="connectionString">Database connection string</param>
-            <param name="storedProcedureName">Stored procedure</param>
+            <param name="procedureName">Procedure name</param>
             <returns>True if success; false if failure</returns>
         </member>
         <member name="M:MSFileInfoScannerInterfaces.iMSFileInfoScanner.ProcessMSFileOrDirectory(System.String,System.String)">
@@ -531,8 +536,11 @@
         </member>
         <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateDatasetInfoFile">
             <summary>
-            When true, create the dataset info XML file
+            When true, create the dataset info XML file (_DatasetInfo.xml)
             </summary>
+            <remarks>
+            If Natural Organic Matter stats were created, will also create the _NOMStats.xml file
+            </remarks>
         </member>
         <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateScanStatsFiles">
             <summary>
@@ -545,6 +553,16 @@
             </summary>
             <remarks>Ignored if <see cref="P:MSFileInfoScannerInterfaces.InfoScannerOptions.CreateScanStatsFiles"/> is false
             </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ComputeNaturalOrganicMatterStats">
+            <summary>
+            When true, compute natural organic matter stats
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.IncludeMetricDescriptionsInNOMStatsXML">
+            <summary>
+            When true, compute natural organic matter stats
+            </summary>
         </member>
         <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.ComputeOverallQualityScores">
             <summary>
@@ -662,15 +680,23 @@
             <summary>
             When true, store the dataset info in the DMS database
             </summary>
+            <remarks>
+            Also stores natural organic matter stats if they were computed
+            </remarks>
         </member>
         <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DatabaseConnectionString">
             <summary>
             Database connection string
             </summary>
         </member>
-        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DSInfoStoredProcedure">
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.DSInfoProcedure">
             <summary>
-            Dataset info stored procedure name
+            Dataset info procedure name
+            </summary>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.NOMStatsProcedure">
+            <summary>
+            NOM stats procedure name
             </summary>
         </member>
         <member name="P:MSFileInfoScannerInterfaces.InfoScannerOptions.PlotWithPython">
@@ -804,6 +830,12 @@
             This is only used when PlottingDeisotopedData is true,
             which will be the case if the source data is a DeconTools _isos.csv file
             </remarks>
+        </member>
+        <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.PlotMzVsIntensityIfSingleScan">
+            <summary>
+            If the cached data comes from only a single scan, plot the data as a mass spectrum (m/z on the X axis) instead of a 2D plot (time on the X axis)
+            </summary>
+            <remarks>If this is true, PlottingDeisotopedData is ignored</remarks>
         </member>
         <member name="P:MSFileInfoScannerInterfaces.LCMSDataPlotterOptions.PlottingDeisotopedData">
             <summary>
