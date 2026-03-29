@@ -45,6 +45,14 @@ namespace DatasetInfoPlugin
         /// </remarks>
         private const string CACHE_DS_INFO_PROCEDURE = "cache_dataset_info_xml";
 
+        /// <summary>
+        /// Procedure name to call to store the natural organic matter stats
+        /// </summary>
+        /// <remarks>
+        /// On PostgreSQL this is cap.cache_dataset_nom_stats_xml
+        /// </remarks>
+        private const string CACHE_NOM_STATS_PROCEDURE = "cache_dataset_nom_stats_xml";
+
         private const string STORED_FILE_SUFFIX = ".stored";
 
         private const string UNKNOWN_FILE_TYPE = "Unknown File Type";
@@ -195,6 +203,7 @@ namespace DatasetInfoPlugin
             mMsFileScannerOptions.SaveLCMS2DPlots = mTaskParams.GetParam("SaveLCMS2DPlots", true);
             mMsFileScannerOptions.ComputeOverallQualityScores = mTaskParams.GetParam("ComputeOverallQualityScores", false);
             mMsFileScannerOptions.CreateDatasetInfoFile = mTaskParams.GetParam("CreateDatasetInfoFile", true);
+            mMsFileScannerOptions.ComputeNaturalOrganicMatterStats = mTaskParams.GetParam("ComputeNaturalOrganicMatterStats", false);
 
             mLCMS2DPlotOptions.MZResolution = mTaskParams.GetParam("LCMS2DPlotMZResolution", LCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
             mLCMS2DPlotOptions.MaxPointsToPlot = mTaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", LCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
@@ -338,7 +347,11 @@ namespace DatasetInfoPlugin
             var errorCodeToReturn = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
 
             var cachedDatasetInfoXML = new List<string>();
+            var cachedNOMStatsXML = new List<string>();
+
             var datasetInfoFilesToRename = new List<FileInfo>();
+            var nomStatsFilesToRename = new List<FileInfo>();
+
             var outputDirectoryNames = new List<string>();
             var primaryFileOrDirectoryProcessed = false;
 
@@ -553,6 +566,11 @@ namespace DatasetInfoPlugin
                     argumentList.Add("/QS");
                 }
 
+                if (mMsFileScannerOptions.ComputeNaturalOrganicMatterStats)
+                {
+                    argumentList.Add("/NOM");
+                }
+
                 if (mMsFileScannerOptions.MS2MzMin > 0)
                 {
                     argumentList.Add(string.Format("/MS2MzMin:{0:F1}", mMsFileScannerOptions.MS2MzMin));
@@ -759,6 +777,12 @@ namespace DatasetInfoPlugin
                         LoadDatasetInfoXML(currentOutputDirectory, cachedDatasetInfoXML, datasetInfoFilesToRename);
                     }
 
+                    if (mMsFileScannerOptions.ComputeNaturalOrganicMatterStats)
+                    {
+                        // Read the NOM stats XML file and store in cachedNOMStatsXML
+                        LoadNOMStatsXML(currentOutputDirectory, cachedNOMStatsXML, nomStatsFilesToRename);
+                    }
+
                     primaryFileOrDirectoryProcessed = true;
 
                     if (validQcGraphics)
@@ -855,9 +879,9 @@ namespace DatasetInfoPlugin
                         returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg, jobParamNote);
                     }
 
-                    if (cachedDatasetInfoXML.Count > 0)
+                    if (cachedDatasetInfoXML.Count > 0 || cachedNOMStatsXML.Count > 0)
                     {
-                        // Do not exit this method yet; we want to store the dataset info in the database
+                        // Do not exit this method yet; we want to store the dataset info and/or NOM Stats in the database
                         break;
                     }
 
@@ -901,6 +925,26 @@ namespace DatasetInfoPlugin
                 datasetInfoFile.MoveTo(renamedFile.FullName);
             }
 
+            // Remove ".stored" from the files in nomStatsFilesToRename
+            foreach (var nomStatsFile in nomStatsFilesToRename)
+            {
+                if (!nomStatsFile.Name.EndsWith(STORED_FILE_SUFFIX))
+                {
+                    LogWarning("File in nomStatsFilesToRename does not have suffix '.stored', which is unexpected: {0}", nomStatsFile.FullName);
+                    continue;
+                }
+
+                var renamedFile = new FileInfo(nomStatsFile.FullName.Substring(0, nomStatsFile.FullName.Length - STORED_FILE_SUFFIX.Length));
+
+                if (renamedFile.Exists)
+                {
+                    LogWarning("Cannot remove '.stored' from NOM stats file, since the target file already exists: {0}", renamedFile.FullName);
+                    continue;
+                }
+
+                nomStatsFile.MoveTo(renamedFile.FullName);
+            }
+
             // Check for dataset acq time gap warnings
             // If any are found, CloseoutMsg is updated
             AcqTimeWarningsReported(datasetXmlMerger, returnData);
@@ -921,11 +965,23 @@ namespace DatasetInfoPlugin
             }
             else
             {
-                // Call procedure cache_dataset_info_xml to store datasetInfoXML in table T_Dataset_Info_XML
+                // Call procedure cache_dataset_info_xml to store combinedDatasetInfoXML in table T_Dataset_Info_XML
                 success = PostDatasetInfoXml(combinedDatasetInfoXML, out errorMessage);
             }
 
-            if (!success)
+            bool successPostNOMStats;
+
+            if (cachedNOMStatsXML.Count == 0 || string.IsNullOrWhiteSpace(cachedNOMStatsXML.First()))
+            {
+                successPostNOMStats = true;
+            }
+            else
+            {
+                // Call procedure cache_dataset_nom_stats_xml to store cachedNOMStatsXML in table T_Dataset_NOM_Stats_XML
+                successPostNOMStats = PostDatasetNOMStatsXml(cachedNOMStatsXML.First(), out errorMessage);
+            }
+
+            if (!success || !successPostNOMStats)
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg, errorMessage);
@@ -935,7 +991,7 @@ namespace DatasetInfoPlugin
             {
                 if (string.IsNullOrEmpty(mMsg))
                 {
-                    mMsg = string.Format("ProcessMSFileOrFolder returned false; error code = {0}", (int)errorCodeToReturn);
+                    mMsg = string.Format("MSFileInfoScanner processing failed; error code = {0}", (int)errorCodeToReturn);
 
                     if (!string.IsNullOrWhiteSpace(mProcessingStatus.ErrorMessage))
                     {
@@ -1577,10 +1633,8 @@ namespace DatasetInfoPlugin
 
         private static void LoadDatasetInfoXML(
             string currentOutputDirectory,
-            // ReSharper disable SuggestBaseTypeForParameter
-            List<string> cachedDatasetInfoXML,
-            List<FileInfo> datasetInfoFilesToRename)
-            // ReSharper restore SuggestBaseTypeForParameter
+            ICollection<string> cachedDatasetInfoXML,
+            ICollection<FileInfo> datasetInfoFilesToRename)
         {
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);
 
@@ -1608,6 +1662,40 @@ namespace DatasetInfoPlugin
 
                 datasetInfoFile.MoveTo(renamedFile.FullName);
                 datasetInfoFilesToRename.Add(datasetInfoFile);
+            }
+        }
+
+        private static void LoadNOMStatsXML(
+                string currentOutputDirectory,
+                ICollection<string> cachedNOMStatsXML,
+                ICollection<FileInfo> nomStatsFilesToRename)
+        {
+            var outputDirectory = new DirectoryInfo(currentOutputDirectory);
+
+            var filesToRename = new List<FileInfo>();
+
+            foreach (var nomStatsXMLFile in outputDirectory.GetFiles("*_NOMStats.xml"))
+            {
+                using var streamReader = new StreamReader(new FileStream(nomStatsXMLFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var nomStatsXML = streamReader.ReadToEnd();
+
+                cachedNOMStatsXML.Add(nomStatsXML);
+
+                filesToRename.Add(nomStatsXMLFile);
+            }
+
+            foreach (var nomStatsFile in filesToRename)
+            {
+                var renamedFile = new FileInfo(nomStatsFile.FullName + STORED_FILE_SUFFIX);
+
+                if (renamedFile.Exists)
+                {
+                    renamedFile.Delete();
+                }
+
+                nomStatsFile.MoveTo(renamedFile.FullName);
+                nomStatsFilesToRename.Add(nomStatsFile);
             }
         }
 
@@ -1764,8 +1852,6 @@ namespace DatasetInfoPlugin
         /// <returns>True if success; false if failure</returns>
         private bool PostDatasetInfoXml(int datasetID, string datasetInfoXML, string connectionString, string procedureName)
         {
-            bool success;
-
             try
             {
                 LogMessage("  Posting DatasetInfo XML to the database (using Dataset ID " + datasetID + ")");
@@ -1817,21 +1903,139 @@ namespace DatasetInfoPlugin
                 if (result == DbUtilsConstants.RET_VAL_OK)
                 {
                     // No errors
-                    success = true;
+                    return true;
                 }
-                else
-                {
-                    LogError("Error calling procedure to store dataset info XML, return code = " + returnParam.Value.CastDBVal<string>());
-                    success = false;
-                }
+
+                LogError("Error calling procedure to store dataset info XML, return code = " + returnParam.Value.CastDBVal<string>());
+                return false;
             }
             catch (Exception ex)
             {
                 LogError("Error calling procedure to store dataset info XML", ex);
-                success = false;
+                return false;
+            }
+        }
+
+        private bool PostDatasetNOMStatsXml(string nomStatsXML, out string errorMessage)
+        {
+            var postCount = 0;
+
+            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+
+            var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+
+            var datasetID = mTaskParams.GetParam("Dataset_ID", 0);
+
+            var successPosting = false;
+
+            while (postCount <= 2)
+            {
+                successPosting = PostDatasetNOMStatsXml(
+                    datasetID, nomStatsXML, connectionStringToUse, CACHE_NOM_STATS_PROCEDURE);
+
+                if (successPosting)
+                {
+                    break;
+                }
+
+                // If the error message contains the text "timeout expired" then try again, up to 2 times
+                if (mMsg.IndexOf("timeout expired", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    break;
+                }
+
+                System.Threading.Thread.Sleep(1500);
+                postCount++;
             }
 
-            return success;
+            if (successPosting)
+            {
+                errorMessage = string.Empty;
+                return true;
+            }
+
+            // Either a non-zero error code was returned, or an error event was received
+            errorMessage = "Error posting dataset info XML";
+            return false;
+        }
+
+        /// <summary>
+        /// Post the dataset info in nomStatsXML to the database, using the specified connection string and procedure
+        /// This version assumes the procedure takes DatasetID as the first parameter
+        /// </summary>
+        /// <param name="datasetID">Dataset ID to send to the procedure</param>
+        /// <param name="nomStatsXML">Natural organic matter stats XML</param>
+        /// <param name="connectionString">Database connection string</param>
+        /// <param name="procedureName">Procedure</param>
+        /// <returns>True if success; false if failure</returns>
+        private bool PostDatasetNOMStatsXml(int datasetID, string nomStatsXML, string connectionString, string procedureName)
+        {
+            try
+            {
+                LogMessage("  Posting NOM Stats XML to the database (using Dataset ID " + datasetID + ")");
+
+                // We need to remove the encoding line from datasetInfoXML before posting to the DB
+                // This line will look like this:
+                //   <?xml version="1.0" encoding="utf-16" standalone="yes"?>
+
+                var startIndex = nomStatsXML.IndexOf("?>", StringComparison.Ordinal);
+
+                string nomStatsXMLClean;
+
+                if (startIndex > 0)
+                {
+                    nomStatsXMLClean = nomStatsXML.Substring(startIndex + 2).Trim();
+                }
+                else
+                {
+                    nomStatsXMLClean = nomStatsXML;
+                }
+
+                // Call procedure procedureName using connection string connectionString
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    LogError("Connection string not defined; unable to post the NOM stats to the database");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(procedureName))
+                {
+                    procedureName = "cache_dataset_nom_stats_xml";
+                }
+
+                var applicationName = "MSFileInfoScanner_DatasetID_" + datasetID;
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse);
+                RegisterEvents(dbTools);
+
+                var cmd = dbTools.CreateCommand(procedureName, CommandType.StoredProcedure);
+
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = datasetID;
+                dbTools.AddParameter(cmd, "@NOMStatsXML", SqlType.XML).Value = nomStatsXMLClean;
+
+                var result = dbTools.ExecuteSP(cmd);
+
+                if (result == DbUtilsConstants.RET_VAL_OK)
+                {
+                    // No errors
+                    return true;
+                }
+
+                LogError("Error calling procedure to store NOM Stats XML, return code = " + returnParam.Value.CastDBVal<string>());
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error calling procedure to store NOM Stats XML", ex);
+                return false;
+            }
         }
 
         private void ProcessMultiDatasetInfoScannerResults(
