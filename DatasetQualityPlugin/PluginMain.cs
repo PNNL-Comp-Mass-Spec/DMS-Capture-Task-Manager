@@ -116,7 +116,11 @@ namespace DatasetQualityPlugin
         /// <summary>
         /// Determine whether we will run Quameter
         /// </summary>
-        /// <remarks>At present, we only process Thermo .Raw files. Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter</remarks>
+        /// <remarks>
+        /// We only process Thermo .Raw files
+        /// If the file only contains MS/MS spectra, it cannot be processed with Quameter
+        /// Do not run Quameter on Astral datasets since the runtime is too long
+        /// </remarks>
         /// <returns>True if success (including if Quameter was skipped); false if an error</returns>
         private bool ConditionallyRunQuameter()
         {
@@ -128,8 +132,9 @@ namespace DatasetQualityPlugin
             var runQuameter = false;
 
             var instClassName = mTaskParams.GetParam("Instrument_Class");
+            var instrumentName = mTaskParams.GetParam("Instrument_Name");
 
-            LogDebug("Instrument class: " + instClassName);
+            LogDebug("Instrument class: {0}, Instrument name: {1}", instClassName, instrumentName);
 
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
 
@@ -150,14 +155,23 @@ namespace DatasetQualityPlugin
                 case InstrumentClass.GC_QExactive:
                 case InstrumentClass.LTQ_FT:
                 case InstrumentClass.Thermo_Exactive:
-                    dataFilePathRemote = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
-
-                    // Confirm that the file has MS1 spectra (since Quameter requires that they be present)
-                    if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetDirectoryPath, out var rawFileSkipReason))
+                    if (instrumentName.StartsWith("Astral", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        skipReason = rawFileSkipReason;
+                        skipReason = "Astral datasets have long Quameter runtimes";
                         dataFilePathRemote = string.Empty;
                     }
+                    else
+                    {
+                        dataFilePathRemote = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+
+                        // Confirm that the file has MS1 spectra (since Quameter requires that they be present)
+                        if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetDirectoryPath, out var rawFileSkipReason))
+                        {
+                            skipReason = rawFileSkipReason;
+                            dataFilePathRemote = string.Empty;
+                        }
+                    }
+
                     break;
 
                 case InstrumentClass.Triple_Quad:
@@ -202,8 +216,6 @@ namespace DatasetQualityPlugin
                 LogMessage(mRetData.EvalMsg);
                 return true;
             }
-
-            var instrumentName = mTaskParams.GetParam("Instrument_Name");
 
             // Lumos datasets will fail with Quameter if they have unsupported scan types
             // 21T datasets will fail with Quameter if they only have one scan
@@ -370,7 +382,7 @@ namespace DatasetQualityPlugin
         {
             try
             {
-                var datasetQCDirectory= new DirectoryInfo(Path.Combine(datasetDirectoryPath, "QC"));
+                var datasetQCDirectory = new DirectoryInfo(Path.Combine(datasetDirectoryPath, "QC"));
 
                 if (!datasetQCDirectory.Exists)
                 {
