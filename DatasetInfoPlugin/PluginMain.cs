@@ -43,7 +43,7 @@ namespace DatasetInfoPlugin
         /// <remarks>
         /// On PostgreSQL this is cap.cache_dataset_info_xml
         /// </remarks>
-        private const string MS_FILE_SCANNER_DS_INFO_SP = "cache_dataset_info_xml";
+        private const string CACHE_DS_INFO_PROCEDURE = "cache_dataset_info_xml";
 
         private const string STORED_FILE_SUFFIX = ".stored";
 
@@ -1725,7 +1725,7 @@ namespace DatasetInfoPlugin
             while (postCount <= 2)
             {
                 successPosting = PostDatasetInfoXml(
-                    datasetID, datasetInfoXML, connectionStringToUse, MS_FILE_SCANNER_DS_INFO_SP);
+                    datasetID, datasetInfoXML, connectionStringToUse, CACHE_DS_INFO_PROCEDURE);
 
                 if (successPosting)
                 {
