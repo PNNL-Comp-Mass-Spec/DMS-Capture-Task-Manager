@@ -41,7 +41,7 @@ namespace DatasetIntegrityPlugin
         private const float RAW_FILE_MAX_SIZE_MB_ORBITRAP = 150000;
         private const float BAF_FILE_MIN_SIZE_KB = 16;
         private const float TDF_FILE_MIN_SIZE_KB = 50;
-        private const float TDF_BIN_FILE_MIN_SIZE_KB = 50;
+        private const float TDF_BIN_FILE_MIN_SIZE_KB = 5;
         private const float TSF_FILE_MIN_SIZE_KB = 16;
         private const float TSF_BIN_FILE_MIN_SIZE_KB = 3;
         private const float SER_FILE_MIN_SIZE_KB = 16;
