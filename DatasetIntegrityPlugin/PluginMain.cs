@@ -1016,6 +1016,20 @@ namespace DatasetIntegrityPlugin
 
         private void ReportFileSizeTooSmall(string dataFileDescription, string filePath, float actualSizeKB, float minSizeKB)
         {
+            GetFileSizeTooSmallMessage(dataFileDescription, filePath, actualSizeKB, minSizeKB, out var evalMessage, out var errorLogMessage);
+
+            mRetData.EvalMsg = evalMessage;
+            LogError(errorLogMessage);
+        }
+
+        private void GetFileSizeTooSmallMessage(
+            string dataFileDescription,
+            string filePath,
+            float actualSizeKB,
+            float minSizeKB,
+            out string evalMessage,
+            out string errorLogMessage)
+        {
             var minSizeText = FileSizeToString(minSizeKB);
 
             // File too small, data file may be corrupt
@@ -1027,16 +1041,16 @@ namespace DatasetIntegrityPlugin
 
             if (Math.Abs(actualSizeKB) < 0.0001)
             {
-                mRetData.EvalMsg = string.Format("{0} file is 0 bytes", dataFileDescription);
+                evalMessage = string.Format("{0} file is 0 bytes", dataFileDescription);
             }
             else
             {
-                mRetData.EvalMsg = string.Format(
+                evalMessage = string.Format(
                     "{0} file size is {1}; minimum allowed size is {2}",
                     dataFileDescription, FileSizeToString(actualSizeKB), minSizeText);
             }
 
-            LogError("{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
+            errorLogMessage = string.Format("{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
                 dataFileDescription,
                 FileSizeToString(actualSizeKB),
                 minSizeText,
@@ -1639,7 +1653,7 @@ namespace DatasetIntegrityPlugin
         /// Tests a BrukerTOF_BAF directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
-        /// <param name="instrumentName"></param>
+        /// <param name="instrumentName">Instrument name</param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerTof_BafDirectory(string datasetDirectoryPath, string instrumentName, InstrumentClass instrumentClass)
@@ -1648,14 +1662,16 @@ namespace DatasetIntegrityPlugin
                 { "analysis.baf", BAF_FILE_MIN_SIZE_KB}
             };
 
-            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, instrumentClass);
+            var altRequiredFiles = new Dictionary<string, float>();
+
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, altRequiredFiles, instrumentClass);
         }
 
         /// <summary>
         /// Tests a BrukerTOF_TDF directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
-        /// <param name="instrumentName"></param>
+        /// <param name="instrumentName">Instrument name</param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerTof_TdfDirectory(string datasetDirectoryPath, string instrumentName, InstrumentClass instrumentClass)
@@ -1665,14 +1681,16 @@ namespace DatasetIntegrityPlugin
                 { "analysis.tdf_bin", TDF_BIN_FILE_MIN_SIZE_KB}
             };
 
-            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, instrumentClass, false);
+            var altRequiredFiles = new Dictionary<string, float>();
+
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, altRequiredFiles, instrumentClass, false);
         }
 
         /// <summary>
         /// Tests a BrukerTOF_ImagingTSF directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
-        /// <param name="instrumentName"></param>
+        /// <param name="instrumentName">Instrument name</param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerTof_ImagingTsfDirectory(string datasetDirectoryPath, string instrumentName, InstrumentClass instrumentClass)
@@ -1682,7 +1700,12 @@ namespace DatasetIntegrityPlugin
                 { "analysis.tsf_bin", TSF_BIN_FILE_MIN_SIZE_KB}
             };
 
-            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, instrumentClass, false);
+            var altRequiredFiles = new Dictionary<string, float> {
+                { "analysis.tdf", TDF_FILE_MIN_SIZE_KB},
+                { "analysis.tdf_bin", TDF_BIN_FILE_MIN_SIZE_KB}
+            };
+
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, altRequiredFiles, instrumentClass, false);
         }
 
         /// <summary>
@@ -1691,6 +1714,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <param name="instrumentName">Instrument name</param>
         /// <param name="requiredInstrumentFiles">Dictionary listing the required file(s); keys are filename and values are minimum size in KB</param>
+        /// <param name="altRequiredInstrumentFiles">Alternative set of required instrument files; keys are filename and values are minimum size in KB</param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="requireMethodDirectory">When true, a subdirectory ending in .m must exist</param>
         /// <returns>Enum indicating test result</returns>
@@ -1698,6 +1722,7 @@ namespace DatasetIntegrityPlugin
             string datasetDirectoryPath,
             string instrumentName,
             Dictionary<string, float> requiredInstrumentFiles,
+            Dictionary<string, float> altRequiredInstrumentFiles,
             InstrumentClass instrumentClass,
             bool requireMethodDirectory = true)
         {
@@ -1714,7 +1739,7 @@ namespace DatasetIntegrityPlugin
 
             if (dotDDirectories.Count > 1)
             {
-                if (instrumentClass == InstrumentClass.TimsTOF_MALDI_Imaging)
+                if (instrumentClass is InstrumentClass.TimsTOF_MALDI_Imaging)
                 {
                     // Each .d directory should have an analysis.tsf[_bin] or analysis.tdf[_bin] file; don't check the extension here, just make sure each .d directory has a matching pair of them
                     // Note: Skipping the first one, because that is checked below
@@ -1764,27 +1789,42 @@ namespace DatasetIntegrityPlugin
                 }
             }
 
-            // Verify that the files in requiredInstrumentFiles exist
-            foreach (var requiredFile in requiredInstrumentFiles)
+            // Verify that the files in requiredInstrumentFiles or altRequiredInstrumentFiles exist
+            var validFilesSet1 = LookForRequiredInstrumentFiles(
+                requiredInstrumentFiles, dotDDirectories,
+                out var filesExistSet1, out var evalMessageSet1, out var errorLogMessageSet1);
+
+            if (!validFilesSet1 && filesExistSet1)
             {
-                var requiredFileName = requiredFile.Key;
-                var minimumFileSizeKB = requiredFile.Value;
+                // At least one of the files in requiredInstrumentFiles were found, but it was too small
+                mRetData.EvalMsg = evalMessageSet1;
+                LogError(errorLogMessageSet1);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
 
-                var foundFiles = PathUtils.FindFilesWildcard(dotDDirectories[0], requiredFileName).ToList();
+            if (!validFilesSet1 && altRequiredInstrumentFiles.Count > 0)
+            {
+                var validFilesSet2 = LookForRequiredInstrumentFiles(
+                    altRequiredInstrumentFiles, dotDDirectories,
+                    out var filesExistSet2, out var evalMessageSet2, out var errorLogMessageSet2);
 
-                if (foundFiles.Count == 0)
+                if (validFilesSet2 && filesExistSet2)
                 {
-                    mRetData.EvalMsg = string.Format("Invalid dataset: {0} file not found", requiredFileName);
-                    LogError(mRetData.EvalMsg);
-                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                    // The files in altRequiredInstrumentFiles exist and are valid
                 }
-
-                // Verify size of the instrument file
-                var dataFileSizeKB = GetFileSize(foundFiles.First());
-
-                if (dataFileSizeKB < minimumFileSizeKB)
+                else
                 {
-                    ReportFileSizeTooSmall(requiredFileName, foundFiles.First().FullName, dataFileSizeKB, minimumFileSizeKB);
+                    if (!validFilesSet2 && filesExistSet2)
+                    {
+                        // At least one of the files in altRequiredInstrumentFiles were found, but it was too small
+                        mRetData.EvalMsg = evalMessageSet2;
+                        LogError(errorLogMessageSet2);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    // None of the files was found; use the set 1 messages
+                    mRetData.EvalMsg = evalMessageSet1;
+                    LogError(errorLogMessageSet1);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -1835,6 +1875,46 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private bool LookForRequiredInstrumentFiles(
+            Dictionary<string, float> requiredInstrumentFiles,
+            IReadOnlyList<DirectoryInfo> dotDDirectories,
+            out bool filesExist,
+            out string evalMessage,
+            out string errorLogMessage)
+        {
+            foreach (var requiredFile in requiredInstrumentFiles)
+            {
+                var requiredFileName = requiredFile.Key;
+                var minimumFileSizeKB = requiredFile.Value;
+
+                var foundFiles = PathUtils.FindFilesWildcard(dotDDirectories[0], requiredFileName).ToList();
+
+                if (foundFiles.Count == 0)
+                {
+                    evalMessage = string.Format("Invalid dataset: {0} file not found", requiredFileName);
+                    errorLogMessage = string.Empty;
+                    filesExist = false;
+                    return false;
+                }
+
+                filesExist = true;
+
+                // Verify size of the instrument file
+                var dataFileSizeKB = GetFileSize(foundFiles.First());
+
+                if (dataFileSizeKB < minimumFileSizeKB)
+                {
+                    GetFileSizeTooSmallMessage(requiredFileName, foundFiles.First().FullName, dataFileSizeKB, minimumFileSizeKB, out evalMessage, out errorLogMessage);
+                    return false;
+                }
+            }
+
+            filesExist = requiredInstrumentFiles.Count > 0;
+            evalMessage = string.Empty;
+            errorLogMessage = string.Empty;
+            return true;
         }
 
         /// <summary>
