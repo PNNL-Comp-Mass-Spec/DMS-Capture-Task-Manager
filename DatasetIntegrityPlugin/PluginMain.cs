@@ -2792,10 +2792,10 @@ namespace DatasetIntegrityPlugin
                     }
                 }
 
-                var pressureColumnsArePresent = (quadPressure > 0 &&
-                                                 rearIonFunnel > 0 &&
-                                                 highPressureFunnel > 0 &&
-                                                 ionFunnelTrap > 0);
+                var pressureColumnsArePresent = quadPressure > 0 &&
+                                                rearIonFunnel > 0 &&
+                                                highPressureFunnel > 0 &&
+                                                ionFunnelTrap > 0;
 
                 if (pressureColumnsArePresent)
                 {
@@ -2823,8 +2823,6 @@ namespace DatasetIntegrityPlugin
                         else
                         {
                             LogError(mRetData.EvalMsg, true);
-
-                            uimfReader.Dispose();
                             return false;
                         }
                     }
