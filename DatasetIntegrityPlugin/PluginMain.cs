@@ -139,7 +139,7 @@ namespace DatasetIntegrityPlugin
             var storagePath = mTaskParams.GetParam("Storage_Path");
             var datasetDirectory = mTaskParams.GetParam("Directory");
             var datasetDirectoryPath = Path.Combine(storageVolExt, Path.Combine(storagePath, datasetDirectory));
-            string dataFileNamePath;
+            string dataFilePath;
 
             // Select which tests will be performed based on instrument class
 
@@ -156,27 +156,27 @@ namespace DatasetIntegrityPlugin
             switch (instrumentClass)
             {
                 case InstrumentClass.Finnigan_Ion_Trap:
-                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
-                    mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
+                    dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    mRetData.CloseoutType = TestFinniganIonTrapFile(dataFilePath);
                     break;
 
                 case InstrumentClass.GC_QExactive:
-                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
-                    mRetData.CloseoutType = TestGQExactiveFile(dataFileNamePath);
+                    dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    mRetData.CloseoutType = TestGQExactiveFile(dataFilePath);
                     break;
 
                 case InstrumentClass.Thermo_SII_LC: // Use the same logic as LTQ_FT; we don't currently have a reason to change what is checked for the LC data files
                 case InstrumentClass.LTQ_FT:
-                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
 
                     // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                     if (instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase))
                     {
-                        mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);
+                        mRetData.CloseoutType = Test21TRawFile(dataFilePath);
                     }
                     else
                     {
-                        mRetData.CloseoutType = TestLTQ_FTFile(dataFileNamePath);
+                        mRetData.CloseoutType = TestLTQ_FTFile(dataFilePath);
                     }
 
                     break;
@@ -186,18 +186,18 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.Thermo_Exactive:
-                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
-                    mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
+                    dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    mRetData.CloseoutType = TestThermoExactiveFile(dataFilePath);
                     break;
 
                 case InstrumentClass.Triple_Quad:
-                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
-                    mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
+                    dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    mRetData.CloseoutType = TestTripleQuadFile(dataFilePath);
                     break;
 
                 case InstrumentClass.IMS_Agilent_TOF_UIMF:
-                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
-                    mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
+                    dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    mRetData.CloseoutType = TestIMSAgilentTOF(dataFilePath, instrumentName);
                     break;
 
                 case InstrumentClass.IMS_Agilent_TOF_DotD:
@@ -286,8 +286,8 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.Shimadzu_GC:
-                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_QGD_EXTENSION);
-                    mRetData.CloseoutType = TestShimadzuQGDFile(dataFileNamePath);
+                    dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_QGD_EXTENSION);
+                    mRetData.CloseoutType = TestShimadzuQGDFile(dataFilePath);
                     break;
 
                 case InstrumentClass.Waters_IMS:
@@ -1368,13 +1368,13 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Tests the integrity of a Sciex QTrap dataset
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <param name="datasetName"></param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType TestSciexQTrapFile(string dataFileNamePath, string datasetName)
+        private EnumCloseOutType TestSciexQTrapFile(string dataFilePath, string datasetName)
         {
             // Verify .wiff file exists in storage directory
-            var tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + InstrumentClassInfo.DOT_WIFF_EXTENSION);
+            var tempFileNamePath = Path.Combine(dataFilePath, datasetName + InstrumentClassInfo.DOT_WIFF_EXTENSION);
 
             if (!File.Exists(tempFileNamePath))
             {
@@ -1394,7 +1394,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify .wiff.scan file exists in storage directory
-            tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + ".wiff.scan");
+            tempFileNamePath = Path.Combine(dataFilePath, datasetName + ".wiff.scan");
 
             if (!File.Exists(tempFileNamePath))
             {
@@ -1420,78 +1420,78 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Tests the integrity of a Thermo Ion Trap Raw File
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType TestFinniganIonTrapFile(string dataFileNamePath)
+        private EnumCloseOutType TestFinniganIonTrapFile(string dataFilePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_LTQ, true);
+            return TestThermoRawFile(dataFilePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_LTQ, true);
         }
 
         /// <summary>
         /// Tests the integrity of a 21T dataset .raw file
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType Test21TRawFile(string dataFileNamePath)
+        private EnumCloseOutType Test21TRawFile(string dataFilePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB_21T, RAW_FILE_MAX_SIZE_MB_ORBITRAP, true);
+            return TestThermoRawFile(dataFilePath, RAW_FILE_MIN_SIZE_KB_21T, RAW_FILE_MAX_SIZE_MB_ORBITRAP, true);
         }
 
         /// <summary>
         /// Tests the integrity of a GC_QExactive dataset
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType TestGQExactiveFile(string dataFileNamePath)
+        private EnumCloseOutType TestGQExactiveFile(string dataFilePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
+            return TestThermoRawFile(dataFilePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
         }
 
         /// <summary>
         /// Tests the integrity of an Orbitrap (LTQ_FT) dataset
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType TestLTQ_FTFile(string dataFileNamePath)
+        private EnumCloseOutType TestLTQ_FTFile(string dataFilePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
+            return TestThermoRawFile(dataFilePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
         }
 
         /// <summary>
         /// Tests the integrity of a Thermo_Exactive dataset
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType TestThermoExactiveFile(string dataFileNamePath)
+        private EnumCloseOutType TestThermoExactiveFile(string dataFilePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
+            return TestThermoRawFile(dataFilePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
         }
 
         /// <summary>
         /// Tests the integrity of a Triple Quad (TSQ) dataset
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType TestTripleQuadFile(string dataFileNamePath)
+        private EnumCloseOutType TestTripleQuadFile(string dataFilePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, true);
+            return TestThermoRawFile(dataFilePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, true);
         }
 
         /// <summary>
         /// Test the integrity of a Thermo .Raw file
         /// If the .Raw file is not found, then looks for a .mgf file, .mzXML, or .mzML file
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <param name="minFileSizeKB">Minimum allowed file size</param>
         /// <param name="maxFileSizeMB">Maximum allowed file size</param>
         /// <param name="openRawFileIfTooSmall">
         /// When true, if the file is less than minFileSizeKB, we try to open it with the ThermoRawFileReader
         /// If we can successfully open the file and get the first scan's data, then we declare the file to be valid
         /// </param>
-        private EnumCloseOutType TestThermoRawFile(string dataFileNamePath, float minFileSizeKB, float maxFileSizeMB, bool openRawFileIfTooSmall)
+        private EnumCloseOutType TestThermoRawFile(string dataFilePath, float minFileSizeKB, float maxFileSizeMB, bool openRawFileIfTooSmall)
         {
             // Verify file exists in storage directory
-            if (!File.Exists(dataFileNamePath))
+            if (!File.Exists(dataFilePath))
             {
                 // File not found; look for alternate extensions
                 var alternateExtensions = new List<string>();
@@ -1503,15 +1503,15 @@ namespace DatasetIntegrityPlugin
 
                 foreach (var altExtension in alternateExtensions)
                 {
-                    var dataFileNamePathAlt = Path.ChangeExtension(dataFileNamePath, altExtension);
+                    var dataFilePathAlt = Path.ChangeExtension(dataFilePath, altExtension);
 
-                    if (File.Exists(dataFileNamePathAlt))
+                    if (File.Exists(dataFilePathAlt))
                     {
                         mRetData.EvalMsg = "Raw file not found, but ." + altExtension + " file exists";
                         LogMessage(mRetData.EvalMsg);
                         minFileSizeKB = 25;
                         maxFileSizeMB = RAW_FILE_MAX_SIZE_MB_ORBITRAP;
-                        dataFileNamePath = dataFileNamePathAlt;
+                        dataFilePath = dataFilePathAlt;
                         alternateFound = true;
                         openRawFileIfTooSmall = false;
                         break;
@@ -1520,14 +1520,14 @@ namespace DatasetIntegrityPlugin
 
                 if (!alternateFound)
                 {
-                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                    mRetData.EvalMsg = "Data file " + dataFilePath + " not found";
                     LogError(mRetData.EvalMsg);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
             // Get size of data file
-            var dataFileSizeKB = GetFileSize(dataFileNamePath);
+            var dataFileSizeKB = GetFileSize(dataFilePath);
 
             // Check min size
             if (dataFileSizeKB < minFileSizeKB)
@@ -1538,7 +1538,7 @@ namespace DatasetIntegrityPlugin
                 {
                     try
                     {
-                        using var reader = new XRawFileIO(dataFileNamePath);
+                        using var reader = new XRawFileIO(dataFilePath);
 
                         RegisterEvents(reader);
 
@@ -1563,7 +1563,7 @@ namespace DatasetIntegrityPlugin
 
                 if (!validFile)
                 {
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, minFileSizeKB);
+                    ReportFileSizeTooSmall("Data", dataFilePath, dataFileSizeKB, minFileSizeKB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -1571,7 +1571,7 @@ namespace DatasetIntegrityPlugin
             // Check max size
             if (dataFileSizeKB > maxFileSizeMB * 1024)
             {
-                ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSizeKB, maxFileSizeMB * 1024);
+                ReportFileSizeTooLarge("Data", dataFilePath, dataFileSizeKB, maxFileSizeMB * 1024);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2360,23 +2360,23 @@ namespace DatasetIntegrityPlugin
 
         private EnumCloseOutType TestIlluminaSequencerDirectory(string datasetDirectoryPath)
         {
-            var dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_TXT_GZ_EXTENSION);
+            var dataFilePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_TXT_GZ_EXTENSION);
 
             // Verify file exists in storage directory
-            if (!File.Exists(dataFileNamePath))
+            if (!File.Exists(dataFilePath))
             {
-                mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                mRetData.EvalMsg = "Data file " + dataFilePath + " not found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Get size of data file
-            var dataFileSizeKB = GetFileSize(dataFileNamePath);
+            var dataFileSizeKB = GetFileSize(dataFilePath);
 
             // Check min size
             if (dataFileSizeKB < ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB)
             {
-                ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB);
+                ReportFileSizeTooSmall("Data", dataFilePath, dataFileSizeKB, ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2388,7 +2388,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify the integrity of the .gz file
-            var validGzFile = TestGzipFile(dataFileNamePath, out var errorMessage);
+            var validGzFile = TestGzipFile(dataFilePath, out var errorMessage);
 
             if (!validGzFile)
             {
@@ -2400,25 +2400,25 @@ namespace DatasetIntegrityPlugin
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath, string instrumentName)
+        private EnumCloseOutType TestIMSAgilentTOF(string dataFilePath, string instrumentName)
         {
             // Verify file exists in storage directory
-            if (!File.Exists(dataFileNamePath))
+            if (!File.Exists(dataFilePath))
             {
-                mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                mRetData.EvalMsg = "Data file " + dataFilePath + " not found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Get size of data file
-            var dataFileSizeKB = GetFileSize(dataFileNamePath);
+            var dataFileSizeKB = GetFileSize(dataFilePath);
 
             // Check min size
             if (instrumentName.StartsWith("TIMS_Maxis", StringComparison.OrdinalIgnoreCase))
             {
                 if (dataFileSizeKB < TIMS_UIMF_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, TIMS_UIMF_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("Data", dataFilePath, dataFileSizeKB, TIMS_UIMF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -2426,11 +2426,11 @@ namespace DatasetIntegrityPlugin
             {
                 if (dataFileSizeKB < UIMF_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("Data", dataFilePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var validFile = UimfFileHasData(dataFileNamePath, out var uimfStatusMessage);
+                var validFile = UimfFileHasData(dataFilePath, out var uimfStatusMessage);
 
                 if (dataFileSizeKB < UIMF_FILE_SMALL_SIZE_KB)
                 {
@@ -2454,7 +2454,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify that the pressure columns are in the correct order
-            if (!ValidatePressureInfo(dataFileNamePath, instrumentName))
+            if (!ValidatePressureInfo(dataFilePath, instrumentName))
             {
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -2466,25 +2466,25 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Tests the integrity of a Shimadzu GC-MS dataset
         /// </summary>
-        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
-        private EnumCloseOutType TestShimadzuQGDFile(string dataFileNamePath)
+        private EnumCloseOutType TestShimadzuQGDFile(string dataFilePath)
         {
             // Verify file exists in storage directory
-            if (!File.Exists(dataFileNamePath))
+            if (!File.Exists(dataFilePath))
             {
-                mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                mRetData.EvalMsg = "Data file " + dataFilePath + " not found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Get size of data file
-            var dataFileSizeKB = GetFileSize(dataFileNamePath);
+            var dataFileSizeKB = GetFileSize(dataFilePath);
 
             // Check min size
             if (dataFileSizeKB < SHIMADZU_QGD_FILE_MIN_SIZE_KB)
             {
-                ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, SHIMADZU_QGD_FILE_MIN_SIZE_KB);
+                ReportFileSizeTooSmall("Data", dataFilePath, dataFileSizeKB, SHIMADZU_QGD_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2750,10 +2750,10 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Extracts the pressure data from the Frame_Parameters table
         /// </summary>
-        /// <param name="dataFileNamePath"></param>
-        /// <param name="instrumentName"></param>
+        /// <param name="dataFilePath"></param>
+        /// <param name="instrumentName">Instrument name</param>
         /// <returns>True if the pressure values are correct; false if the columns have swapped data</returns>
-        private bool ValidatePressureInfo(string dataFileNamePath, string instrumentName)
+        private bool ValidatePressureInfo(string dataFilePath, string instrumentName)
         {
             // Example of correct pressures:
             //   HighPressureFunnelPressure  IonFunnelTrapPressure  RearIonFunnelPressure  QuadrupolePressure
@@ -2769,7 +2769,7 @@ namespace DatasetIntegrityPlugin
             var loggedPressureErrorWarning = false;
 
             // Open the file with the UIMFReader
-            using var uimfReader = new DataReader(dataFileNamePath);
+            using var uimfReader = new DataReader(dataFilePath);
 
             var masterFrameList = uimfReader.GetMasterFrameList();
 
