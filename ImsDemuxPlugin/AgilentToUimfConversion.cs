@@ -137,7 +137,7 @@ namespace ImsDemuxPlugin
 
                 var dotDDirectoryLocal = PluginMain.GetDotDDirectory(mWorkDir, mDataset);
 
-                // Check if it already exists locally first; if demultiplexed then the file should already be in the working directory
+                // Check if it already exists locally first; if demultiplexed, the file should already be in the working directory
                 if (!dotDDirectoryLocal.Exists)
                 {
                     var directoryCopiedFromRemote = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryLocal.Name, dotDDirectoryLocal.FullName, true, mRetData);

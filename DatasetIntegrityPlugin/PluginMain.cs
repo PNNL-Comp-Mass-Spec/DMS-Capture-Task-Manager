@@ -820,7 +820,7 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Looks files matching fileSpec
         /// For matching files, copies them or moves them up one directory
-        /// If matchDatasetName is true then requires that the file start with the name of the dataset
+        /// If matchDatasetName is true, requires that the file start with the name of the dataset
         /// </summary>
         /// <param name="datasetDirectory">Dataset directory</param>
         /// <param name="fileSpec">Files to match, for example *.mis</param>
@@ -1493,14 +1493,14 @@ namespace DatasetIntegrityPlugin
 
         /// <summary>
         /// Test the integrity of a Thermo .Raw file
-        /// If the .Raw file is not found, then looks for a .mgf file, .mzXML, or .mzML file
+        /// If the .Raw file is not found, looks for a .mgf file, .mzXML, or .mzML file
         /// </summary>
         /// <param name="dataFilePath">Fully qualified path to dataset file</param>
         /// <param name="minFileSizeKB">Minimum allowed file size</param>
         /// <param name="maxFileSizeMB">Maximum allowed file size</param>
         /// <param name="openRawFileIfTooSmall">
         /// When true, if the file is less than minFileSizeKB, we try to open it with the ThermoRawFileReader
-        /// If we can successfully open the file and get the first scan's data, then we declare the file to be valid
+        /// If we can successfully open the file and get the first scan's data, we declare the file to be valid
         /// </param>
         private EnumCloseOutType TestThermoRawFile(string dataFilePath, float minFileSizeKB, float maxFileSizeMB, bool openRawFileIfTooSmall)
         {
@@ -2139,7 +2139,7 @@ namespace DatasetIntegrityPlugin
 
                 if (dataFileSizeKB < SER_FILE_MIN_SIZE_KB)
                 {
-                    // If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
+                    // If on the 15T and the ser file is small but the .mcf file is not empty, this is OK
                     if (!(string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase) && mcfFileSizeMax > 0))
                     {
                         ReportFileSizeTooSmall("ser", serFile.First().FullName, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);

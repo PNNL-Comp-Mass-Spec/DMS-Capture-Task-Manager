@@ -38,7 +38,7 @@ namespace DatasetInfoPlugin
         private const int MAX_INFO_SCANNER_RUNTIME_MINUTES = 60 * MAX_INFO_SCANNER_RUNTIME_HOURS;
 
         /// <summary>
-        /// Procedure name to call to store the dataset info
+        /// Procedure used to store the dataset info
         /// </summary>
         /// <remarks>
         /// On PostgreSQL this is cap.cache_dataset_info_xml
@@ -46,7 +46,7 @@ namespace DatasetInfoPlugin
         private const string CACHE_DS_INFO_PROCEDURE = "cache_dataset_info_xml";
 
         /// <summary>
-        /// Procedure name to call to store the natural organic matter stats
+        /// Procedure used to store the natural organic matter stats
         /// </summary>
         /// <remarks>
         /// On PostgreSQL this is cap.cache_dataset_nom_stats_xml
@@ -1820,7 +1820,7 @@ namespace DatasetInfoPlugin
                     break;
                 }
 
-                // If the error message contains the text "timeout expired" then try again, up to 2 times
+                // If the error message contains the text "timeout expired", try again, up to 2 times
                 if (mMsg.IndexOf("timeout expired", StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     break;
@@ -1920,7 +1920,7 @@ namespace DatasetInfoPlugin
         {
             var postCount = 0;
 
-            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
+            // This connection string points to the DMS database on prismdb2
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
@@ -1941,7 +1941,7 @@ namespace DatasetInfoPlugin
                     break;
                 }
 
-                // If the error message contains the text "timeout expired" then try again, up to 2 times
+                // If the error message contains the text "timeout expired", try again, up to 2 times
                 if (mMsg.IndexOf("timeout expired", StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     break;
@@ -1958,7 +1958,7 @@ namespace DatasetInfoPlugin
             }
 
             // Either a non-zero error code was returned, or an error event was received
-            errorMessage = "Error posting dataset info XML";
+            errorMessage = "Error posting natural organic matter stats XML";
             return false;
         }
 

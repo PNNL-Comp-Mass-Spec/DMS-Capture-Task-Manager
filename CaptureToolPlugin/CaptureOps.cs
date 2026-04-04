@@ -885,7 +885,7 @@ namespace CaptureToolPlugin
             if (!mClientServer)
             {
                 // Look for job parameter Storage_Server_Name in storageVolExternal
-                // If mClientServer=false but storageVolExternal does not contain Storage_Server_Name then auto-switch mClientServer to true
+                // If mClientServer=false but storageVolExternal does not contain Storage_Server_Name, auto-switch mClientServer to true
 
                 if (storageVolExternal.IndexOf(computerName, StringComparison.OrdinalIgnoreCase) < 0)
                 {
