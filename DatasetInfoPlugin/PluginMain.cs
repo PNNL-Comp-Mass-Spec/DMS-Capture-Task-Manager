@@ -1895,8 +1895,8 @@ namespace DatasetInfoPlugin
                 var cmd = dbTools.CreateCommand(procedureName, CommandType.StoredProcedure);
 
                 var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = datasetID;
-                dbTools.AddParameter(cmd, "@DatasetInfoXML", SqlType.XML).Value = dsInfoXMLClean;
+                dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = datasetID;
+                dbTools.AddParameter(cmd, "@datasetInfoXML", SqlType.XML).Value = dsInfoXMLClean;
 
                 var result = dbTools.ExecuteSP(cmd);
 
@@ -2017,8 +2017,8 @@ namespace DatasetInfoPlugin
                 var cmd = dbTools.CreateCommand(procedureName, CommandType.StoredProcedure);
 
                 var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = datasetID;
-                dbTools.AddParameter(cmd, "@NOMStatsXML", SqlType.XML).Value = nomStatsXMLClean;
+                dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = datasetID;
+                dbTools.AddParameter(cmd, "@nomStatsXML", SqlType.XML).Value = nomStatsXMLClean;
 
                 var result = dbTools.ExecuteSP(cmd);
 
