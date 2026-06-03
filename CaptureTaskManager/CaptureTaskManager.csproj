@@ -48,9 +48,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.10" />
-    <PackageReference Include="PRISM-Library" Version="2.9.20" />
-    <PackageReference Include="PRISMWin-Library" Version="1.1.23" />
+    <PackageReference Include="PRISM-DatabaseUtils" Version="1.5.11" />
+    <PackageReference Include="PRISM-Library" Version="2.9.25" />
+    <PackageReference Include="PRISMWin-Library" Version="1.1.24" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
     <PackageReference Include="ThermoRawFileReader" Version="4.2.63" />
     <PackageReference Include="UIMFLibrary" Version="3.8.30" />
