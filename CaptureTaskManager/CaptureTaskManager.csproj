@@ -12,6 +12,9 @@
     <!-- When true, copy NuGet dependencies to the output directory -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>$(DefineConstants);PLUGIN_DEBUG_MODE_ENABLED</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup>
     <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
     <StartupObject>CaptureTaskManager.Program</StartupObject>
