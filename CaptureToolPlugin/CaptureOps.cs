@@ -1582,10 +1582,13 @@ namespace CaptureToolPlugin
 
                                 // On Orbitrap IQ-X instruments, there might be .cdResult and .cdResultView files with the same name as the .raw file
 
+                                // QExactP06 from 2023 and later has a SLIM chamber in front of it, and writes .raw files with a .0000 SLIM metadata file with the same name as the .raw file
+
                                 var rawFound = false;
                                 var tsvFound = false;
                                 var sldFound = false;
                                 var cdResultFound = false;
+                                var slimMetadataFileFound = false;
 
                                 foreach (var file in foundFiles)
                                 {
@@ -1608,6 +1611,11 @@ namespace CaptureToolPlugin
                                         string.Equals(Path.GetExtension(file.Name), ".cdResultView", StringComparison.OrdinalIgnoreCase))
                                     {
                                         cdResultFound = true;
+                                    }
+
+                                    if (string.Equals(Path.GetExtension(file.Name), ".0000", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        slimMetadataFileFound = true;
                                     }
                                 }
 
@@ -1632,6 +1640,12 @@ namespace CaptureToolPlugin
                                 if (rawFound && cdResultFound)
                                 {
                                     LogMessage("Capturing a .raw file with a corresponding .cdResult file");
+                                    break;
+                                }
+
+                                if (rawFound && slimMetadataFileFound)
+                                {
+                                    LogMessage("Capturing a .raw file with a corresponding .0000 SLIM metadata file");
                                     break;
                                 }
                             }
