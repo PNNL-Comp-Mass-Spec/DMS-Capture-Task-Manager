@@ -1534,6 +1534,9 @@ namespace CaptureToolPlugin
                 case InstrumentClass.Triple_Quad:
                 case InstrumentClass.Shimadzu_GC:
                 case InstrumentClass.Thermo_SII_LC:
+                    // Note that datasetInfo.DatasetType is assigned by the DatasetFileSearchTool based on the number of files or directories found for the dataset
+                    // It is not assigned based on the instrument class; check for edge cases where we can change datasetInfo.DatasetType to InstrumentFileLayout.File
+
                     if (datasetInfo.DatasetType != InstrumentFileLayout.File)
                     {
                         if (datasetInfo.DatasetType == InstrumentFileLayout.DirectoryNoExt)
@@ -1579,6 +1582,7 @@ namespace CaptureToolPlugin
                                 // Allow for this during capture
 
                                 // On Thermo instruments, there might be a sequence file (extension .sld) with the same name as the .raw file; ignore it
+                                // Alternatively, there might be a manually created .mzML file; ignore it
 
                                 // On Orbitrap IQ-X instruments, there might be .cdResult and .cdResultView files with the same name as the .raw file
 
@@ -1587,6 +1591,7 @@ namespace CaptureToolPlugin
                                 var rawFound = false;
                                 var tsvFound = false;
                                 var sldFound = false;
+                                var mzMLFound = false;
                                 var cdResultFound = false;
                                 var slimMetadataFileFound = false;
 
@@ -1607,6 +1612,11 @@ namespace CaptureToolPlugin
                                         sldFound = true;
                                     }
 
+                                    if (string.Equals(Path.GetExtension(file.Name), ".mzML", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        mzMLFound = true;
+                                    }
+
                                     if (string.Equals(Path.GetExtension(file.Name), ".cdResult", StringComparison.OrdinalIgnoreCase) ||
                                         string.Equals(Path.GetExtension(file.Name), ".cdResultView", StringComparison.OrdinalIgnoreCase))
                                     {
@@ -1625,9 +1635,16 @@ namespace CaptureToolPlugin
                                     break;
                                 }
 
-                                if (rawFound && sldFound)
+                                if (rawFound && (sldFound || mzMLFound))
                                 {
-                                    LogMessage("Ignoring sequence file " + datasetInfo.FileOrDirectoryName + ".sld");
+                                    if (mzMLFound)
+                                    {
+                                        LogMessage("Ignoring mzML file " + datasetInfo.FileOrDirectoryName + ".mzML");
+                                    }
+                                    else
+                                    {
+                                        LogMessage("Ignoring sequence file " + datasetInfo.FileOrDirectoryName + ".sld");
+                                    }
 
                                     datasetInfo.DatasetType = InstrumentFileLayout.File;
                                     datasetInfo.FileOrDirectoryName = datasetInfo.DatasetName + ".raw";

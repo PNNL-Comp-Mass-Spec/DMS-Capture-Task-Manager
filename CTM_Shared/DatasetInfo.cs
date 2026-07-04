@@ -27,6 +27,9 @@ namespace CaptureTaskManager
         /// <summary>
         /// Dataset type
         /// </summary>
+        /// <remarks>
+        /// This is assigned by the DatasetFileSearchTool based on the number of files or directories found for the dataset
+        /// </remarks>
         public InstrumentFileLayout DatasetType { get; set; }
 
         /// <summary>
