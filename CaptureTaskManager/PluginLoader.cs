@@ -17,6 +17,8 @@ namespace CaptureTaskManager
     /// </summary>
     public class PluginLoader : LoggerBase
     {
+        // Ignore Spelling: uncomment
+
         public static string FileName { get; set; } = "plugin_info.xml";
 
         public static string ErrMsg { get; set; }

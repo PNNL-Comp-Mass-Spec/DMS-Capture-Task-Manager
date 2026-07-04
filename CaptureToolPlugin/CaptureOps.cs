@@ -20,7 +20,8 @@ namespace CaptureToolPlugin
     /// </summary>
     public class CaptureOps : LoggerBase
     {
-        // Ignore Spelling: acq, bio, bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, prepend, Pwd, secfso, ser, Subfolder, Unsubscribe, Username
+        // Ignore Spelling: acq, bio, bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, Orbitrap
+        // Ignore Spelling: prepend, Pwd, secfso, ser, Subfolder, Thermo, Unsubscribe, Username
 
         private enum DatasetDirectoryState
         {
