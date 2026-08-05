@@ -1580,7 +1580,7 @@ namespace CaptureToolPlugin
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath));
                             var foundFiles = sourceDirectory.GetFiles(datasetInfo.FileOrDirectoryName + ".*").ToList();
 
-                            if (foundFiles.Count is 2 or 3)
+                            if (foundFiles.Count >= 2)
                             {
                                 // On the 21T each .raw file can have a corresponding .tsv file
                                 // Allow for this during capture
