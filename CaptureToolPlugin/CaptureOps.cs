@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using CaptureTaskManager;
 using CaptureToolPlugin.DataCapture;
 using PRISM;
@@ -1524,6 +1525,8 @@ namespace CaptureToolPlugin
                 _ => "an unknown entity"
             };
 
+            var slimExtensionMatcher = new Regex(@"\.00[0-1][0-9]$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
             // Make sure we are capturing the correct entity type (file or directory) based on instrumentClass
             // See table T_Instrument_Class for allowed types
             switch (instrumentClass)
@@ -1588,6 +1591,7 @@ namespace CaptureToolPlugin
                                 // On Orbitrap IQ-X instruments, there might be .cdResult and .cdResultView files with the same name as the .raw file
 
                                 // QExactP06 from 2023 and later has a SLIM chamber in front of it, and writes .raw files with a .0000 SLIM metadata file with the same name as the .raw file
+                                // Starting in July 2026, additional SLIM metadata files were found, ending with .0001, .0002, .0003, and .0004
 
                                 var rawFound = false;
                                 var tsvFound = false;
@@ -1624,8 +1628,11 @@ namespace CaptureToolPlugin
                                         cdResultFound = true;
                                     }
 
-                                    if (string.Equals(Path.GetExtension(file.Name), ".0000", StringComparison.OrdinalIgnoreCase))
+                                    var slimFileMatch = slimExtensionMatcher.Match(Path.GetExtension(file.Name));
+
+                                    if (slimFileMatch.Success)
                                     {
+                                        // The file extension is .0000, .0001, .0002, .0003, .0004, etc.
                                         slimMetadataFileFound = true;
                                     }
                                 }
