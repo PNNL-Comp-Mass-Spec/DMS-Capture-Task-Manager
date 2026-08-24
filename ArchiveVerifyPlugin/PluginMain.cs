@@ -631,36 +631,14 @@ namespace ArchiveVerifyPlugin
         /// Create a new SHA-1 hash results file
         /// </summary>
         /// <param name="hashResultsFile"></param>
-        /// <param name="archivedFiles"></param>
-        /// <param name="datasetInstrument"></param>
-        /// <param name="datasetYearQuarter"></param>
+        /// <param name="hashResults"></param>
         /// <returns>True if successful, false if an error</returns>
         private static bool CreateHashResultsFile(
             FileInfo hashResultsFile,
-            IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
-            string datasetInstrument,
-            string datasetYearQuarter)
+            Dictionary<string, HashInfo> hashResults)
         {
             try
             {
-                var hashResults = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var archivedFile in archivedFiles)
-                {
-                    archivedFile.Instrument = datasetInstrument;
-                    archivedFile.DatasetYearQuarter = datasetYearQuarter;
-
-                    var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
-
-                    var hashInfo = new HashInfo
-                    {
-                        HashCode = archivedFile.Hash,
-                        MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
-                    };
-
-                    hashResults.Add(archivedFilePath, hashInfo);
-                }
-
                 if (hashResultsFile.Directory != null)
                 {
                     // Create the target folders if necessary
@@ -706,17 +684,23 @@ namespace ArchiveVerifyPlugin
 
                 var hashResultsFile = new FileInfo(hashResultsFilePath);
 
+                var hashResults = GetHashResults(archivedFiles, datasetInstrument, datasetYearQuarter, out var warningMessage);
+                if (!string.IsNullOrWhiteSpace(warningMessage))
+                {
+                    mRetData.CloseoutMsg = warningMessage;
+                }
+
                 bool success;
 
                 if (!hashResultsFile.Exists)
                 {
                     // Target file doesn't exist; nothing to merge
-                    success = CreateHashResultsFile(hashResultsFile, archivedFiles, datasetInstrument, datasetYearQuarter);
+                    success = CreateHashResultsFile(hashResultsFile, hashResults);
                 }
                 else
                 {
                     // File exists; merge the new values with the existing data
-                    success = UpdateHashResultsFile(hashResultsFilePath, archivedFiles, datasetInstrument, datasetYearQuarter);
+                    success = UpdateHashResultsFile(hashResultsFilePath, hashResults);
                 }
 
                 if (success)
@@ -778,6 +762,69 @@ namespace ArchiveVerifyPlugin
                 select item.Key).First();
 
             return bestTransactionId;
+        }
+
+        /// <summary>
+        /// Generate the hash results set from the archived files list
+        /// </summary>
+        /// <param name="archivedFiles"></param>
+        /// <param name="datasetInstrument"></param>
+        /// <param name="datasetYearQuarter"></param>
+        /// <param name="warningMessage">possible warning message</param>
+        /// <returns>True if successful, false if an error</returns>
+        private static Dictionary<string, HashInfo> GetHashResults(
+            IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
+            string datasetInstrument,
+            string datasetYearQuarter,
+            out string warningMessage)
+        {
+            var hashResults = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
+            var duplicateEntryCount = 0;
+            var duplicateEntryHashMismatchCount = 0;
+            warningMessage = string.Empty;
+
+            foreach (var archivedFile in archivedFiles)
+            {
+                if (string.IsNullOrEmpty(archivedFile.Instrument))
+                {
+                    archivedFile.Instrument = datasetInstrument;
+                }
+
+                if (string.IsNullOrEmpty(archivedFile.DatasetYearQuarter))
+                {
+                    archivedFile.DatasetYearQuarter = datasetYearQuarter;
+                }
+
+                var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
+
+                var hashInfo = new HashInfo
+                {
+                    HashCode = archivedFile.Hash,
+                    MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
+                };
+
+                if (!hashResults.TryGetValue(archivedFilePath, out var matchedHash))
+                {
+                    hashResults.Add(archivedFilePath, hashInfo);
+                }
+                else if (!matchedHash.IsMatch(hashInfo))
+                {
+                    // If the MyEMSL file ID is the same, it's an insignificant issue (just duplicated in metadata), but separate file IDs are a bigger concern
+                    duplicateEntryCount++;
+                    if (string.Equals(matchedHash.HashCode, hashInfo.HashCode))
+                    {
+                        duplicateEntryHashMismatchCount++;
+                    }
+                }
+            }
+
+            if (duplicateEntryCount > 0)
+            {
+                warningMessage = $"Found {duplicateEntryCount} duplicated files with distinct IDs in MyEMSL, with {duplicateEntryHashMismatchCount} mismatched hashes";
+                LogWarning(warningMessage);
+            }
+
+            return hashResults;
         }
 
         private static string GetHashResultsFilePath(string hashResultsFolderPath, string datasetName, string instrumentName, string datasetYearQuarter)
@@ -881,9 +928,7 @@ namespace ArchiveVerifyPlugin
 
         private static bool UpdateHashResultsFile(
             string hashResultsFilePath,
-            IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
-            string datasetInstrument,
-            string datasetYearQuarter)
+            Dictionary<string, HashInfo> newHashResults)
         {
             var hashResults = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
 
@@ -899,26 +944,11 @@ namespace ArchiveVerifyPlugin
 
             var saveMergedFile = false;
 
-            // Merge the results in archivedFiles with hashResults
-            foreach (var archivedFile in archivedFiles)
+            // Merge the results in newHashResults with hashResults
+            foreach (var hashResult in newHashResults)
             {
-                if (string.IsNullOrEmpty(archivedFile.Instrument))
-                {
-                    archivedFile.Instrument = datasetInstrument;
-                }
-
-                if (string.IsNullOrEmpty(archivedFile.DatasetYearQuarter))
-                {
-                    archivedFile.DatasetYearQuarter = datasetYearQuarter;
-                }
-
-                var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
-
-                var hashInfo = new HashInfo
-                {
-                    HashCode = archivedFile.Hash,
-                    MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
-                };
+                var archivedFilePath = hashResult.Key;
+                var hashInfo = hashResult.Value;
 
                 if (hashResults.TryGetValue(archivedFilePath, out var hashInfoCached))
                 {
