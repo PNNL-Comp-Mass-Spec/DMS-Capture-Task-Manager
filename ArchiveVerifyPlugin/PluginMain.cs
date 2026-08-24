@@ -685,6 +685,7 @@ namespace ArchiveVerifyPlugin
                 var hashResultsFile = new FileInfo(hashResultsFilePath);
 
                 var hashResults = GetHashResults(archivedFiles, datasetInstrument, datasetYearQuarter, out var warningMessage);
+
                 if (!string.IsNullOrWhiteSpace(warningMessage))
                 {
                     mRetData.CloseoutMsg = warningMessage;
@@ -811,6 +812,7 @@ namespace ArchiveVerifyPlugin
                 {
                     // If the MyEMSL file ID is the same, it's an insignificant issue (just duplicated in metadata), but separate file IDs are a bigger concern
                     duplicateEntryCount++;
+
                     if (string.Equals(matchedHash.HashCode, hashInfo.HashCode))
                     {
                         duplicateEntryHashMismatchCount++;

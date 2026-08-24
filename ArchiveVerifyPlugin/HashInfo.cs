@@ -5,6 +5,7 @@
         // Ignore Spelling: EMSL
 
         private string mHashCode;
+
         private string mMyEMSLFileID;
 
         /// <summary>
