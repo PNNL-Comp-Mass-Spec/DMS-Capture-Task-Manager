@@ -22,3 +22,4 @@ DeployedFiles/*.lnk
 /RefLib/*/Pacifica.dll
 /RefLib/*/Pacifica.xml
 /RefLib/*/Pacifica.deps.json
+*.user
