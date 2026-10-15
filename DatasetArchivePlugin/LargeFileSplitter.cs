@@ -83,6 +83,9 @@ namespace DatasetArchivePlugin
             // We can alternatively use 'cat [splitBaseName]?? > [inputFileInfo.Name]', but that requires additional software
             fileContents.Add($"copy /b {splitBaseName}?? {inputFileInfo.Name}");
             fileContents.Add("");
+            fileContents.Add("rem restore the original file last write time (UTC)");
+            fileContents.Add($"powershell -Command \"(Get-Item {inputFileInfo.Name}).LastWriteTimeUtc = '{inputFileInfo.LastWriteTimeUtc:G}'\"");
+            fileContents.Add("");
 
             return fileContents;
         }
@@ -211,6 +214,8 @@ namespace DatasetArchivePlugin
                         }
                     }
 
+                    // TODO: update output file timestamps to match the original file
+
                     OnProgressUpdate($"File split {i + 1} of {outputPaths.Count} complete", (float)totalBytesCopied / inputFile.Length);
 
                     if (outputFile.Position < outputFile.Length)
@@ -234,6 +239,20 @@ namespace DatasetArchivePlugin
                 {
                     break;
                 }
+            }
+
+            try
+            {
+                // Preserve the original file modified timestamp with each split file
+                foreach (var file in outputPaths)
+                {
+                    var fi = new FileInfo(file);
+                    fi.LastWriteTimeUtc = inputFileInfo.LastWriteTimeUtc;
+                }
+            }
+            catch (Exception e)
+            {
+                // Intentionally ignored
             }
 
             OnProgressUpdate("File split complete", 100);
