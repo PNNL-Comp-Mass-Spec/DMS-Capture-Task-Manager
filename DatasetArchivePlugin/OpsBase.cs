@@ -591,6 +591,7 @@ namespace DatasetArchivePlugin
             if (mArchiveOrUpdate != UPDATE || string.IsNullOrWhiteSpace(subDirName) || !subDirName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
             {
                 // Requirements, part 1 not met, so just return
+                OnStatusEvent("Entered SplitLargeDataFile, but requirements not met (ArchiveUpdate and uploading a .d directory)");
                 return false;
             }
 
@@ -614,11 +615,14 @@ namespace DatasetArchivePlugin
 
             if (string.IsNullOrWhiteSpace(possibleSplit))
             {
+                OnStatusEvent($"Did not find a file to split in directory {datasetSubDirectoryPath}");
                 return false;
             }
 
             var fileToSplit = new FileInfo(Path.Combine(datasetSubDirectoryPath, possibleSplit));
             var outputBasePath = Path.Combine(datasetDirectoryPath, $"{mDatasetName}_{possibleSplit.Replace(".", "_")}_files_part");
+
+            //OnStatusEvent($"Calling LargeFileSplitter with parameters \"{fileToSplit.FullName}\", \"{outputBasePath}\", 3, 50");
 
             var splitter = new LargeFileSplitter(fileToSplit, outputBasePath, 3, 50);
             RegisterEvents(splitter);
@@ -659,7 +663,6 @@ namespace DatasetArchivePlugin
             allowRetry = true;
             mMyEmslUploadSuccess = false;
             criticalErrorMessage = string.Empty;
-            var trySplitLargeSerFile = false;
 
             if (maxAttempts < 1)
             {
@@ -672,7 +675,7 @@ namespace DatasetArchivePlugin
 
                 Console.WriteLine("Uploading files for " + mDatasetName + " to MyEMSL; attempt=" + attempts);
 
-                success = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage, out trySplitLargeSerFile);
+                success = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage, out var trySplitLargeDataFile);
 
                 if (!allowRetry)
                 {
@@ -684,7 +687,7 @@ namespace DatasetArchivePlugin
                     break;
                 }
 
-                if (trySplitLargeSerFile)
+                if (trySplitLargeDataFile)
                 {
                     if (attempts > 1)
                     {
@@ -809,6 +812,8 @@ namespace DatasetArchivePlugin
                 var subDirName = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName", string.Empty));
                 if (mArchiveOrUpdate == UPDATE && !string.IsNullOrWhiteSpace(subDirName) && subDirName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
                 {
+                    OnStatusEvent($"Checking the upload directory {subDirName} for certain files that might need to be split");
+
                     // Set client/server perspective & setup paths
                     var baseStoragePath =
                         mTaskParams.GetParam(string.Equals(mMgrParams.GetParam("perspective"), "client", StringComparison.OrdinalIgnoreCase)
@@ -822,12 +827,15 @@ namespace DatasetArchivePlugin
                     var datasetDirectoryPath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory, subDirName));
                     var datasetDirectoryInfo = new DirectoryInfo(datasetDirectoryPath);
 
+                    //OnStatusEvent($"Checking in path {datasetDirectoryPath}");
+
                     // Check for certain files and test their size against the thresholds
                     var possibleSplit = GetLargeFileToPossiblySplit(datasetDirectoryInfo);
 
                     if (!string.IsNullOrWhiteSpace(possibleSplit))
                     {
                         hasVeryLargeDataFile = true;
+                        OnStatusEvent($"Found '{possibleSplit}' file to possibly split if the first upload attempt fails");
                     }
                 }
 
@@ -1003,7 +1011,9 @@ namespace DatasetArchivePlugin
 
                     if (hasVeryLargeDataFile)
                     {
+                        OnStatusEvent("Upload failed due to size-related issue; allowing retry for to split large data file and re-attempt");
                         // allow a single retry, which will happen after splitting the large file
+                        trySplitLargeDataFile = true;
                         return false;
                     }
 

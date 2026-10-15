@@ -250,7 +250,7 @@ namespace DatasetArchivePlugin
                     fi.LastWriteTimeUtc = inputFileInfo.LastWriteTimeUtc;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // Intentionally ignored
             }
