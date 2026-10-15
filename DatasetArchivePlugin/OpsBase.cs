@@ -39,6 +39,15 @@ namespace DatasetArchivePlugin
 
         private const string PROCEDURE_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK = "make_new_archive_update_task";
 
+        /// <summary>
+        /// Thresholds and file names for when we should automatically split certain files if the initial upload attempt fails with certain messages. Stored as a long to support conversion to bytes without casting.
+        /// </summary>
+        private readonly Dictionary<string, long> largeFileSplitThresholdsGB = new Dictionary<string, long>()
+        {
+            { "ser", 200 }, // ser files are usually accompanied by other files that are also fairly large, so 200 GB might even be too high
+            { "analysis.tsf_bin", 350 } // in imaging runs, this is the primary data file and other files are usually 1% of the size or less
+        };
+
         private readonly IMgrParams mMgrParams;
         protected readonly ITaskParams mTaskParams;
         private readonly IStatusFile mStatusTools;
@@ -453,6 +462,29 @@ namespace DatasetArchivePlugin
             return string.Empty;
         }
 
+        /// <summary>
+        /// Check the directory for files specified in <see cref="largeFileSplitThresholdsGB"/> and test if they exceed the specified threshold
+        /// </summary>
+        /// <param name="parentDirectory"></param>
+        /// <returns></returns>
+        private string GetLargeFileToPossiblySplit(DirectoryInfo parentDirectory)
+        {
+            foreach (var file in parentDirectory.GetFiles())
+            {
+                if (largeFileSplitThresholdsGB.TryGetValue(file.Name, out var thresholdGB))
+                {
+                    var sizeGB = CTMUtilities.BytesToGB(file.Length);
+
+                    if (sizeGB >= thresholdGB)
+                    {
+                        return file.FullName;
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
         // ReSharper disable SuggestBaseTypeForParameter
 
         /// <summary>
@@ -552,6 +584,57 @@ namespace DatasetArchivePlugin
             }
         }
 
+        private bool SplitLargeDataFile()
+        {
+            // Check for a large ser/other file (exceeding 200GB), but only if we are doing an ArchiveUpdate
+            var subDirName = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName", string.Empty));
+            if (mArchiveOrUpdate != UPDATE || string.IsNullOrWhiteSpace(subDirName) || !subDirName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
+            {
+                // Requirements, part 1 not met, so just return
+                return false;
+            }
+
+            // Set client/server perspective & setup paths
+            var baseStoragePath =
+                mTaskParams.GetParam(string.Equals(mMgrParams.GetParam("perspective"), "client", StringComparison.OrdinalIgnoreCase)
+                    ? "Storage_Vol_External"
+                    : "Storage_Vol");
+
+            // Path to dataset on storage server
+            var storagePath = mTaskParams.GetParam("Storage_Path");
+            var datasetDirectory = mTaskParams.GetParam("Directory");
+
+            var datasetDirectoryPath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory));
+
+            var datasetSubDirectoryPath = Path.Combine(datasetDirectoryPath, subDirName);
+            var datasetSubDirectoryInfo = new DirectoryInfo(datasetSubDirectoryPath);
+
+            // Check for certain files and test their size against the thresholds
+            var possibleSplit = GetLargeFileToPossiblySplit(datasetSubDirectoryInfo);
+
+            if (string.IsNullOrWhiteSpace(possibleSplit))
+            {
+                return false;
+            }
+
+            var fileToSplit = new FileInfo(Path.Combine(datasetSubDirectoryPath, possibleSplit));
+            var outputBasePath = Path.Combine(datasetDirectoryPath, $"{mDatasetName}_{possibleSplit.Replace(".", "_")}_files_part");
+
+            var splitter = new LargeFileSplitter(fileToSplit, outputBasePath, 3, 50);
+            RegisterEvents(splitter);
+
+            if (!splitter.SplitFileAndVerifyThenDelete(out var message))
+            {
+                // TODO: Do we need to do anything with the error message, since it should already be logged?
+                return false;
+            }
+
+            var outputDirectoryNames = splitter.OutputDirectories.Select(Path.GetFileName).ToList();
+            CreateArchiveUpdateJobsForDataset(outputDirectoryNames);
+
+            return true;
+        }
+
         /// <summary>
         /// Use MyEMSLUploader to upload the data to MyEMSL, trying up to maxAttempts times
         /// </summary>
@@ -576,6 +659,7 @@ namespace DatasetArchivePlugin
             allowRetry = true;
             mMyEmslUploadSuccess = false;
             criticalErrorMessage = string.Empty;
+            var trySplitLargeSerFile = false;
 
             if (maxAttempts < 1)
             {
@@ -588,7 +672,7 @@ namespace DatasetArchivePlugin
 
                 Console.WriteLine("Uploading files for " + mDatasetName + " to MyEMSL; attempt=" + attempts);
 
-                success = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage);
+                success = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage, out trySplitLargeSerFile);
 
                 if (!allowRetry)
                 {
@@ -598,6 +682,21 @@ namespace DatasetArchivePlugin
                 if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
                 {
                     break;
+                }
+
+                if (trySplitLargeSerFile)
+                {
+                    if (attempts > 1)
+                    {
+                        // Treat this the same as !allowRetry
+                        break;
+                    }
+
+                    if (!SplitLargeDataFile())
+                    {
+                        // If the split fails, then fail out
+                        break;
+                    }
                 }
 
                 if (!success && attempts < maxAttempts)
@@ -638,13 +737,15 @@ namespace DatasetArchivePlugin
         /// <param name="useTestInstance">True to use the test instance</param>
         /// <param name="allowRetry">Output: whether the upload should be retried if it failed</param>
         /// <param name="criticalErrorMessage">Output: critical error message</param>
+        /// <param name="trySplitLargeDataFile">Output: very large file found (ser or analysis.tsf_bin), retry after splitting the file</param>
         /// <returns>True if success, false if an error</returns>
         private bool UploadToMyEMSL(
             bool recurse,
             TarStreamUploader.UploadDebugMode debugMode,
             bool useTestInstance,
             out bool allowRetry,
-            out string criticalErrorMessage)
+            out string criticalErrorMessage,
+            out bool trySplitLargeDataFile)
         {
             var startTime = DateTime.UtcNow;
 
@@ -654,6 +755,8 @@ namespace DatasetArchivePlugin
 
             allowRetry = true;
             criticalErrorMessage = string.Empty;
+            trySplitLargeDataFile = false;
+            var hasVeryLargeDataFile = false;
 
             try
             {
@@ -702,6 +805,32 @@ namespace DatasetArchivePlugin
                 // Note: If the dataset directory has over 15 GB of data (including subdirectories), only the base directory and the QC directory will be pushed
                 // Other subdirectories need to be pushed with separate ArchiveUpdate tasks
 
+                // Check for a large ser/other file (exceeding 200GB), but only if we are doing an ArchiveUpdate
+                var subDirName = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName", string.Empty));
+                if (mArchiveOrUpdate == UPDATE && !string.IsNullOrWhiteSpace(subDirName) && subDirName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Set client/server perspective & setup paths
+                    var baseStoragePath =
+                        mTaskParams.GetParam(string.Equals(mMgrParams.GetParam("perspective"), "client", StringComparison.OrdinalIgnoreCase)
+                            ? "Storage_Vol_External"
+                            : "Storage_Vol");
+
+                    // Path to dataset on storage server
+                    var storagePath = mTaskParams.GetParam("Storage_Path");
+                    var datasetDirectory = mTaskParams.GetParam("Directory");
+
+                    var datasetDirectoryPath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory, subDirName));
+                    var datasetDirectoryInfo = new DirectoryInfo(datasetDirectoryPath);
+
+                    // Check for certain files and test their size against the thresholds
+                    var possibleSplit = GetLargeFileToPossiblySplit(datasetDirectoryInfo);
+
+                    if (!string.IsNullOrWhiteSpace(possibleSplit))
+                    {
+                        hasVeryLargeDataFile = true;
+                    }
+                }
+
                 // Start the upload: the uploader will compile a list of files to upload, then push them into MyEMSL
                 var success = myEMSLUploader.SetupMetadataAndUpload(config, debugMode, out var statusURL);
 
@@ -740,8 +869,15 @@ namespace DatasetArchivePlugin
                     {
                         mErrMsg = LARGE_DATASET_UPLOAD_ERROR;
 
-                        // Do not auto-retry uploads over 15 GB; force an admin to check on things
-                        allowRetry = false;
+                        if (!hasVeryLargeDataFile)
+                        {
+                            // Do not auto-retry uploads over 15 GB; force an admin to check on things
+                            allowRetry = false;
+                        }
+                        else
+                        {
+                            trySplitLargeDataFile = true;
+                        }
                     }
                 }
 
@@ -864,6 +1000,12 @@ namespace DatasetArchivePlugin
                 else if (CTMUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                 {
                     mErrMsg += ": " + LARGE_DATASET_UPLOAD_ERROR;
+
+                    if (hasVeryLargeDataFile)
+                    {
+                        // allow a single retry, which will happen after splitting the large file
+                        return false;
+                    }
 
                     // Do not auto-retry uploads of over 15 GB in size; force an admin to check on things
                     allowRetry = false;
