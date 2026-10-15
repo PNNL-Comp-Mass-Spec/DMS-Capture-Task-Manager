@@ -466,7 +466,7 @@ namespace DatasetArchivePlugin
         /// Check the directory for files specified in <see cref="largeFileSplitThresholdsGB"/> and test if they exceed the specified threshold
         /// </summary>
         /// <param name="parentDirectory"></param>
-        /// <returns></returns>
+        /// <returns>Full path to file to possibly split</returns>
         private string GetLargeFileToPossiblySplit(DirectoryInfo parentDirectory)
         {
             foreach (var file in parentDirectory.GetFiles())
@@ -611,16 +611,16 @@ namespace DatasetArchivePlugin
             var datasetSubDirectoryInfo = new DirectoryInfo(datasetSubDirectoryPath);
 
             // Check for certain files and test their size against the thresholds
-            var possibleSplit = GetLargeFileToPossiblySplit(datasetSubDirectoryInfo);
+            var possibleSplitPath = GetLargeFileToPossiblySplit(datasetSubDirectoryInfo);
 
-            if (string.IsNullOrWhiteSpace(possibleSplit))
+            if (string.IsNullOrWhiteSpace(possibleSplitPath))
             {
                 OnStatusEvent($"Did not find a file to split in directory {datasetSubDirectoryPath}");
                 return false;
             }
 
-            var fileToSplit = new FileInfo(Path.Combine(datasetSubDirectoryPath, possibleSplit));
-            var outputBasePath = Path.Combine(datasetDirectoryPath, $"{mDatasetName}_{possibleSplit.Replace(".", "_")}_files_part");
+            var fileToSplit = new FileInfo(possibleSplitPath);
+            var outputBasePath = Path.Combine(datasetDirectoryPath, $"{mDatasetName}_{fileToSplit.Name.Replace(".", "_")}_files_part");
 
             //OnStatusEvent($"Calling LargeFileSplitter with parameters \"{fileToSplit.FullName}\", \"{outputBasePath}\", 3, 50");
 
@@ -830,12 +830,12 @@ namespace DatasetArchivePlugin
                     //OnStatusEvent($"Checking in path {datasetDirectoryPath}");
 
                     // Check for certain files and test their size against the thresholds
-                    var possibleSplit = GetLargeFileToPossiblySplit(datasetDirectoryInfo);
+                    var possibleSplitPath = GetLargeFileToPossiblySplit(datasetDirectoryInfo);
 
-                    if (!string.IsNullOrWhiteSpace(possibleSplit))
+                    if (!string.IsNullOrWhiteSpace(possibleSplitPath))
                     {
                         hasVeryLargeDataFile = true;
-                        OnStatusEvent($"Found '{possibleSplit}' file to possibly split if the first upload attempt fails");
+                        OnStatusEvent($"Found '{possibleSplitPath}' file to possibly split if the first upload attempt fails");
                     }
                 }
 
