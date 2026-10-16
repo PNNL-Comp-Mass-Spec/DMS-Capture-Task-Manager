@@ -381,32 +381,32 @@ namespace DatasetArchivePlugin
 
                 var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
 
-                var cmd = dbTools.CreateCommand(PROCEDURE_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK, CommandType.StoredProcedure);
-
-                // Define parameter for procedure's return value
-                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
-                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-
-                dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, mDatasetName);
-                var resultsDirectoryParam = dbTools.AddParameter(cmd, "@resultsDirectoryName", SqlType.VarChar, 128);
-
-                if (dbServerType == DbServerTypes.PostgreSQL)
-                {
-                    dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.Boolean, value: false);
-                    dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.Boolean, value: false);
-                }
-                else
-                {
-                    dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.TinyInt, value: 0);
-                    dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
-                }
-
-                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
-
                 var successCount = 0;
 
                 foreach (var subdirectoryName in subdirectoryNames)
                 {
+                    var cmd = dbTools.CreateCommand(PROCEDURE_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK, CommandType.StoredProcedure);
+
+                    // Define parameter for procedure's return value
+                    // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                    var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
+                    dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, mDatasetName);
+                    var resultsDirectoryParam = dbTools.AddParameter(cmd, "@resultsDirectoryName", SqlType.VarChar, 128);
+
+                    if (dbServerType == DbServerTypes.PostgreSQL)
+                    {
+                        dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.Boolean, value: false);
+                        dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.Boolean, value: false);
+                    }
+                    else
+                    {
+                        dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.TinyInt, value: 0);
+                        dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+                    }
+
+                    var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+
                     resultsDirectoryParam.Value = subdirectoryName;
 
                     var datasetAndDirectory = string.Format("dataset {0}, subdirectory {1}", mDatasetName, subdirectoryName);
@@ -414,6 +414,7 @@ namespace DatasetArchivePlugin
                     LogTools.LogMessage("Creating archive update job for " + datasetAndDirectory);
 
                     // Call the procedure (retry the call, up to 4 times)
+                    // Note: this call also disposes the command, so we cannot re-use it here.
                     mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
                     var returnCode = DBToolsBase.GetReturnCode(returnParam);
