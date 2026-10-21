@@ -23,7 +23,7 @@ namespace CaptureTaskManager
     /// </summary>
     internal static class Program
     {
-        // Ignore Spelling: OxyPlot
+        // Ignore Spelling: OxyPlot, yyyy
 
         private static readonly string ProgramDate;
 

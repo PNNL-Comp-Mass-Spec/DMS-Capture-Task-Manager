@@ -30,7 +30,7 @@ namespace DatasetIntegrityPlugin
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: Acq, acqus, batchfile, chrom, cli, cmd, fid, fticr, idx, mgf,
-        // Ignore Spelling: nosplash, paramlist, pos, ser, uimf, utf, wlkXZsvC-miP6A2KH-DgAuTix2
+        // Ignore Spelling: nosplash, paramlist, pos, ser, Thermo, uimf, utf, wlkXZsvC-miP6A2KH-DgAuTix2
 
         // ReSharper restore CommentTypo
 

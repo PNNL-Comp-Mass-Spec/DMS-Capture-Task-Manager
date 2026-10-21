@@ -56,12 +56,24 @@ namespace CaptureTaskManager
 
         protected string mWorkDir;
 
+        /// <summary>
+        /// Dataset name
+        /// </summary>
         protected string mDataset;
 
+        /// <summary>
+        /// Capture task job
+        /// </summary>
         protected int mJob;
 
+        /// <summary>
+        /// Dataset ID
+        /// </summary>
         protected int mDatasetID;
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
         protected string mMgrName;
 
         /// <summary>

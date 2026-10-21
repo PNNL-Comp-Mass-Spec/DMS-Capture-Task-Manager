@@ -7,6 +7,8 @@ namespace CaptureTaskManager
 {
     public abstract class LoggerBase
     {
+        // Ignore Spelling: Unregister, unregistering
+
         /// <summary>
         /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
         /// </summary>
