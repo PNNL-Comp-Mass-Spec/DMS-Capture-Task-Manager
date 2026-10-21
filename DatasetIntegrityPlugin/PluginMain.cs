@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -16,6 +17,7 @@ using System.Threading;
 using System.Xml;
 using CaptureTaskManager;
 using PRISM;
+using PRISMDatabaseUtils;
 using ThermoRawFileReader;
 using UIMFLibrary;
 
@@ -70,6 +72,11 @@ namespace DatasetIntegrityPlugin
         private const float ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB = 1000;
         private const int MAX_AGILENT_TO_CDF_RUNTIME_MINUTES = 10;
 
+        /// <summary>
+        /// Procedure used to store the acquisition log messages
+        /// </summary>
+        private const string UPDATE_ACQ_LOG_MESSAGES_PROCEDURE = "update_dataset_acq_log_messages";
+
         private ToolReturnData mRetData = new();
 
         private DateTime mProcessingStartTime;
@@ -81,6 +88,7 @@ namespace DatasetIntegrityPlugin
         private DateTime mLastStatusUpdate;
 
         private int mStatusUpdateIntervalMinutes;
+
         /// <summary>
         /// Runs the dataset integrity step tool
         /// </summary>
@@ -310,6 +318,66 @@ namespace DatasetIntegrityPlugin
             LogDebug("Completed PluginMain.RunTool()");
 
             return mRetData;
+        }
+
+        private string ConvertAcquisitionLogMessagesToXML(Dictionary<string, AcquisitionMessageInfo> logMessages)
+        {
+            var xmlSettings = new XmlWriterSettings
+            {
+                CheckCharacters = true,
+                Indent = true,
+                IndentChars = "  ",
+                Encoding = Encoding.UTF8,
+                CloseOutput = false        // Do not close output automatically so that the MemoryStream can be read after the XmlWriter has been closed
+            };
+
+            var memStream = new MemoryStream();
+            var writer = XmlWriter.Create(memStream, xmlSettings);
+
+            writer.WriteStartDocument(true);
+
+            // Write the beginning of the "Root" element.
+            writer.WriteStartElement("AcqLogMessages");
+
+            writer.WriteStartElement("Dataset");
+
+            if (mDatasetID > 0)
+            {
+                writer.WriteAttributeString("DatasetID", mDatasetID.ToString());
+            }
+
+            writer.WriteString(mDataset);
+            writer.WriteEndElement();       // Dataset EndElement
+
+            writer.WriteStartElement("Messages");
+
+            foreach (var logMessage in logMessages)
+            {
+                writer.WriteStartElement("Message");
+
+                writer.WriteAttributeString("MessageType", logMessage.Value.MessageType);
+                writer.WriteAttributeString("ObservationCount", logMessage.Value.ObservationCount.ToString());
+                writer.WriteAttributeString("ElutionTimeMin", logMessage.Value.ElutionTimeMin.ToString());
+                writer.WriteAttributeString("ElutionTimeMax", logMessage.Value.ElutionTimeMax.ToString());
+
+                writer.WriteString(logMessage.Key);
+                writer.WriteEndElement();       // Message EndElement
+            }
+
+            writer.WriteEndElement();       // Messages
+
+            writer.WriteEndElement();  // End the "Root" element (AcqLogMessages)
+
+            writer.WriteEndDocument(); // End the document
+
+            writer.Close();
+
+            // Now Rewind the memory stream and output as a string
+            memStream.Position = 0;
+            var reader = new StreamReader(memStream);
+
+            // Return the XML as text
+            return reader.ReadToEnd();
         }
 
         private bool ConvertAgilentDotDDirectoryToCDF(string datasetDirectoryPath, string exePath)
@@ -711,6 +779,86 @@ namespace DatasetIntegrityPlugin
         }
 
         /// <summary>
+        /// Check for warnings or errors in the status log and error log
+        /// </summary>
+        /// <param name="dataFilePath">Data file path</param>
+        /// <param name="logMessages">Output: log messages found in the data file (keys are the log message text and values are additional information)</param>
+        /// <returns>True if successful, false if an exception</returns>
+        private static bool ExamineThermoRawFileLogs(string dataFilePath, out Dictionary<string, AcquisitionMessageInfo> logMessages)
+        {
+            logMessages = new Dictionary<string, AcquisitionMessageInfo>();
+
+            try
+            {
+                using var reader = new XRawFileIO(dataFilePath);
+
+                // GetStatusLogEntries returns a dictionary where keys are the retention time and values are the status log messages
+                foreach (var statusLogEntry in reader.GetStatusLogEntries())
+                {
+                    if (!statusLogEntry.Value.StartsWith("Status-", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var elutionTime = statusLogEntry.Key;
+
+                    string messageType;
+
+                    if (statusLogEntry.Value.StartsWith("Status-Warn"))
+                    {
+                        messageType = "Warning";
+                    }
+                    else if (statusLogEntry.Value.StartsWith("Status-Error"))
+                    {
+                        messageType = "Error";
+                    }
+                    else if (statusLogEntry.Value.StartsWith("Status-Fail"))
+                    {
+                        messageType = "Failure";
+                    }
+                    else
+                    {
+                        messageType = string.Empty;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(messageType))
+                        continue;
+
+                    if (logMessages.TryGetValue(statusLogEntry.Value, out var msgInfo))
+                    {
+                        UpdateAcqMessageEntry(msgInfo, elutionTime);
+                    }
+                    else
+                    {
+                        logMessages.Add(statusLogEntry.Value, new AcquisitionMessageInfo(messageType, elutionTime));
+                    }
+
+                    break;
+                }
+
+                // GetErrorLogEntries returns a dictionary where keys are the retention time and values are the error log messages
+                foreach (var errorLogEntry in reader.GetErrorLogEntries())
+                {
+                    var elutionTime = errorLogEntry.Key;
+
+                    if (logMessages.TryGetValue(errorLogEntry.Value, out var msgInfo))
+                    {
+                        UpdateAcqMessageEntry(msgInfo, elutionTime);
+                    }
+                    else
+                    {
+                        logMessages.Add(errorLogEntry.Value, new AcquisitionMessageInfo("Error", elutionTime));
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ExamineThermoRawFileLogs: " + ex.Message, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Convert a file size in kilobytes to a string form with units KB, MB or GB
         /// </summary>
         /// <param name="fileSizeKB">File size, in KB</param>
@@ -1070,6 +1218,107 @@ namespace DatasetIntegrityPlugin
             base.Setup(mgrParams, taskParams, statusTools);
 
             LogDebug("Completed PluginMain.Setup()");
+        }
+
+        /// <summary>
+        /// Store acquisition log messages in the database
+        /// </summary>
+        /// <param name="logMessages">Dictionary of log messages to store</param>
+        /// <returns>True if the log messages were successfully stored; otherwise, false</returns>
+        private bool StoreAcquisitionLogMessagesInDatabase(Dictionary<string, AcquisitionMessageInfo> logMessages)
+        {
+            // This connection string points to the DMS database on prismdb2
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+
+            var applicationName = string.Format("{0}_DatasetIntegrity_DatasetID_{1}", mMgrParams.ManagerName, mDatasetID);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+
+            var logMessageXML = ConvertAcquisitionLogMessagesToXML(logMessages);
+
+            var successPosting = StoreAcquisitionLogMessagesInDatabase(
+                mDatasetID, logMessageXML, connectionStringToUse, UPDATE_ACQ_LOG_MESSAGES_PROCEDURE);
+
+            if (successPosting)
+            {
+                return true;
+            }
+
+            // Either a non-zero error code was returned, or an error event was received
+            mRetData.CloseoutMsg = AppendToComment(mRetData.CloseoutMsg, "Error storing acquisition log messages in the database");
+            return false;
+        }
+
+        /// <summary>
+        /// Store acquisition log messages in the database, using the specified connection string and procedure
+        /// This version assumes the procedure takes DatasetID as the first parameter
+        /// </summary>
+        /// <param name="datasetID">Dataset ID to send to the procedure</param>
+        /// <param name="logMessageXML">Log messages, formatted as XML</param>
+        /// <param name="connectionString">Database connection string</param>
+        /// <param name="procedureName">Procedure</param>
+        /// <returns>True if success; false if failure</returns>
+        private bool StoreAcquisitionLogMessagesInDatabase(int datasetID, string logMessageXML, string connectionString, string procedureName)
+        {
+            try
+            {
+                LogMessage("  Storing acquisition log messages in the database (using Dataset ID " + datasetID + ")");
+
+                // We need to remove the encoding line from logMessageXML before posting to the DB
+                // This line will look like this:
+                //   <?xml version="1.0" encoding="utf-16" standalone="yes"?>
+
+                var startIndex = logMessageXML.IndexOf("?>", StringComparison.Ordinal);
+
+                string logMessageXMLClean;
+
+                if (startIndex > 0)
+                {
+                    logMessageXMLClean = logMessageXML.Substring(startIndex + 2).Trim();
+                }
+                else
+                {
+                    logMessageXMLClean = logMessageXML;
+                }
+
+                // Call procedure procedureName using connection string connectionString
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    LogError("Connection string not defined; unable to store the acquisition log messages in the database");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(procedureName))
+                {
+                    procedureName = "update_dataset_acq_log_messages";
+                }
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionString);
+                RegisterEvents(dbTools);
+
+                var cmd = dbTools.CreateCommand(procedureName, CommandType.StoredProcedure);
+
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = datasetID;
+                dbTools.AddParameter(cmd, "@logMessagesXML", SqlType.XML).Value = logMessageXMLClean;
+
+                var result = dbTools.ExecuteSP(cmd);
+
+                if (result == DbUtilsConstants.RET_VAL_OK)
+                {
+                    // No errors
+                    return true;
+                }
+
+                LogError("Error calling procedure to store acquisition log messages, return code = " + returnParam.Value.CastDBVal<string>());
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error calling procedure to store acquisition log messages", ex);
+                return false;
+            }
         }
 
         /// <summary>
@@ -1587,6 +1836,24 @@ namespace DatasetIntegrityPlugin
             {
                 ReportFileSizeTooLarge("Data", dataFilePath, dataFileSizeKB, maxFileSizeMB * 1024);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Check for warnings or errors in the status log and error log
+            var success = ExamineThermoRawFileLogs(dataFilePath, out var logMessages);
+
+            if (!success)
+            {
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (logMessages.Count > 0)
+            {
+                var dbSuccess = StoreAcquisitionLogMessagesInDatabase(logMessages);
+
+                if (!dbSuccess)
+                {
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             // If we got to here, everything was OK
@@ -2825,6 +3092,26 @@ namespace DatasetIntegrityPlugin
                 uimfStatusMessage = "appears corrupt (exception reading data)";
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Update an acquisition message info item, incrementing the observation count and updating the min and max elution times
+        /// </summary>
+        /// <param name="msgInfo">The acquisition message info item to update</param>
+        /// <param name="elutionTime">The elution time of the most recent occurrence of the warning or error message</param>
+        private static void UpdateAcqMessageEntry(AcquisitionMessageInfo msgInfo, double elutionTime)
+        {
+            if (elutionTime < msgInfo.ElutionTimeMin)
+            {
+                msgInfo.ElutionTimeMin = elutionTime;
+            }
+
+            if (elutionTime > msgInfo.ElutionTimeMax)
+            {
+                msgInfo.ElutionTimeMax = elutionTime;
+            }
+
+            msgInfo.ObservationCount++;
         }
 
         /// <summary>
