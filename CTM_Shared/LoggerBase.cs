@@ -146,7 +146,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="messageType"></param>
-        protected void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
+        protected static void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
             switch (messageType)
             {
@@ -168,17 +168,17 @@ namespace CaptureTaskManager
             }
         }
 
-        protected void DebugEventHandlerConsoleOnly(string statusMessage)
+        protected static void DebugEventHandlerConsoleOnly(string statusMessage)
         {
             LogDebug(statusMessage, writeToLog: false);
         }
 
-        protected void DebugEventHandler(string statusMessage)
+        protected static void DebugEventHandler(string statusMessage)
         {
             LogDebug(statusMessage);
         }
 
-        protected void StatusEventHandler(string statusMessage)
+        protected static void StatusEventHandler(string statusMessage)
         {
             if (statusMessage.StartsWith(RunDosProgram.RUN_PROGRAM_STATUS_LINE) &&
                 statusMessage.Contains("DLLVersionInspector"))
@@ -191,12 +191,12 @@ namespace CaptureTaskManager
             }
         }
 
-        protected void ErrorEventHandler(string errorMessage, Exception ex)
+        protected static void ErrorEventHandler(string errorMessage, Exception ex)
         {
             LogError(errorMessage, ex);
         }
 
-        protected void WarningEventHandler(string warningMessage)
+        protected static void WarningEventHandler(string warningMessage)
         {
             LogWarning(warningMessage);
         }

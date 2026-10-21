@@ -1022,7 +1022,7 @@ namespace DatasetIntegrityPlugin
             LogError(errorLogMessage);
         }
 
-        private void GetFileSizeTooSmallMessage(
+        private static void GetFileSizeTooSmallMessage(
             string dataFileDescription,
             string filePath,
             float actualSizeKB,
@@ -1877,7 +1877,7 @@ namespace DatasetIntegrityPlugin
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool LookForRequiredInstrumentFiles(
+        private static bool LookForRequiredInstrumentFiles(
             Dictionary<string, float> requiredInstrumentFiles,
             IReadOnlyList<DirectoryInfo> dotDDirectories,
             out bool filesExist,
