@@ -1587,6 +1587,7 @@ namespace DatasetInfoPlugin
 
             mMsg = "PluginMain.GetDataFileOrDirectoryName; directory not found: " + fileOrDirectoryPath;
             LogError(mMsg);
+
             mMsg = "Directory not found: " + fileOrDirectoryPath;
 
             return new List<string>();
@@ -1802,18 +1803,16 @@ namespace DatasetInfoPlugin
             // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
+            var applicationName = string.Format("{0}_DatasetInfo_DatasetID_{1}", mMgrParams.ManagerName, mDatasetID);
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-
-            var datasetID = mTaskParams.GetParam("Dataset_ID", 0);
 
             var successPosting = false;
 
             while (postCount <= 2)
             {
                 successPosting = PostDatasetInfoXml(
-                    datasetID, datasetInfoXML, connectionStringToUse, CACHE_DS_INFO_PROCEDURE);
+                    mDatasetID, datasetInfoXML, connectionStringToUse, CACHE_DS_INFO_PROCEDURE);
 
                 if (successPosting)
                 {
@@ -1885,11 +1884,7 @@ namespace DatasetInfoPlugin
                     procedureName = "cache_dataset_info_xml";
                 }
 
-                var applicationName = "MSFileInfoScanner_DatasetID_" + datasetID;
-
-                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-
-                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse);
+                var dbTools = DbToolsFactory.GetDBTools(connectionString);
                 RegisterEvents(dbTools);
 
                 var cmd = dbTools.CreateCommand(procedureName, CommandType.StoredProcedure);
@@ -1923,18 +1918,16 @@ namespace DatasetInfoPlugin
             // This connection string points to the DMS database on prismdb2
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
+            var applicationName = string.Format("{0}_DatasetInfo_DatasetID_{1}", mMgrParams.ManagerName, mDatasetID);
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-
-            var datasetID = mTaskParams.GetParam("Dataset_ID", 0);
 
             var successPosting = false;
 
             while (postCount <= 2)
             {
                 successPosting = PostDatasetNOMStatsXml(
-                    datasetID, nomStatsXML, connectionStringToUse, CACHE_NOM_STATS_PROCEDURE);
+                    mDatasetID, nomStatsXML, connectionStringToUse, CACHE_NOM_STATS_PROCEDURE);
 
                 if (successPosting)
                 {
@@ -2007,11 +2000,7 @@ namespace DatasetInfoPlugin
                     procedureName = "cache_dataset_nom_stats_xml";
                 }
 
-                var applicationName = "MSFileInfoScanner_DatasetID_" + datasetID;
-
-                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-
-                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse);
+                var dbTools = DbToolsFactory.GetDBTools(connectionString);
                 RegisterEvents(dbTools);
 
                 var cmd = dbTools.CreateCommand(procedureName, CommandType.StoredProcedure);
