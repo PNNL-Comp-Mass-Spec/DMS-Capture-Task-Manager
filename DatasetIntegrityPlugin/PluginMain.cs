@@ -286,7 +286,11 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.Agilent_TOF_V2:
-                    mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectoryPath);
+                    // SLIM08_AgQTOF10 originally collected data as .UIMF files and was instrument class IMS_Agilent_TOF_UIMF
+                    // Starting in November 2026, it acquires data as .d directories and is instrument class IMS_Agilent_TOF_DotD, but the directories do not have .m method directories
+                    var requireMethodDirectory = !instrumentName.StartsWith("SLIM08");
+
+                    mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectoryPath, requireMethodDirectory);
                     break;
 
                 case InstrumentClass.Illumina_Sequencer:
