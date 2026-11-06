@@ -25,7 +25,7 @@ namespace DatasetInfoPlugin
     public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: acq, Altis, Bruker, fid, href, html, Illumina, labelling, maldi, mgf
-        // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, utf, wiff
+        // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, uncomment, utf, wiff
 
         private const string BRUKER_MCF_FILE_EXTENSION = ".mcf";
 
@@ -1420,7 +1420,21 @@ namespace DatasetInfoPlugin
                     {
                         // IMS08_AcQTOF05, IMS09_AgQToF06, IMS11_AgQTOF08
                         fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
-                        isFile = false;
+
+                        var agilentDirectory = new DirectoryInfo(Path.Combine(datasetDirectory.FullName, fileOrDirectoryName));
+
+                        if (!agilentDirectory.Exists)
+                        {
+                            // Method InstrumentClassInfo() found IMSFrame.bin, IMSFrame.xsd, or IMSFrameMeth.xml in a subdirectory in the dataset directory
+                            // However, that subdirectory is not directly below the dataset directory, so use the .UIMF file instead
+                            // See, for example, dataset QC_IMS_MS2_CE20_MJx10_R2 which first had data uploaded as a .d directory, then as a .uimf file, and the .d directory is located at Agilent_dotD\QC_IMS_MS2_CE20_MJx10_R2.d
+                            fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION;
+                            isFile = true;
+                        }
+                        else
+                        {
+                            isFile = false;
+                        }
                     }
                     else
                     {
